@@ -1,186 +1,113 @@
-<!DOCTYPE html>
-<html lang="fr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>CV WAMA INVEST</title>
-</head>
-<style>
-    *{
-        margin: 0;
-        padding: 0;
-        box-sizing: border-box;
-        font-family: "Segoe UI", sans-serif;
-    }
+<?php require_once 'inc/auth.php'; ?>
+<?php require_once 'inc/header.php'; ?>
 
-    body {
-        background: #f5f7fa;
-        color: #333;
-    }
-    h2{
-        text-align: center;
-    }
-
-    .main1{
-        display: flex;
-        align-items: center;
-        text-align: center;
-        justify-content: space-around;
-        margin-top: 5%;
-    }
-
-    button{
-        padding: 12px 25px;
-        border: none;
-        background: #1a73e8;
-        color: white;
-        text-decoration: none;
-        font-weight: bold;
-        margin-right: 10px;
-        border-radius: 6px;
-        cursor: pointer;
-    }
-    button:hover{
-        background: #155cc0;
-    }
-
-
-    .main2{
-        display: flex;
-        justify-content: space-around;
-        text-align: center;
-    }
-
-    .cards {
-        display: flex;
-        justify-content: center;
-        gap: 30px;
-    }
-
-    .card {
-        background: white;
-        padding: 30px;
-        width: 250px;
-        border-radius: 10px;
-        box-shadow: 0 5px 15px rgba(0,0,0,0.05);
-    }
-
-    .card h3 {
-        margin-bottom: 10px;
-    }
-
-    .steps {
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        flex-wrap: wrap;
-        gap: 20px;
-    }
-
-    .step {
-        background: white;
-        border-radius: 20px;
-        padding: 25px 35px;
-        text-align: center;
-        box-shadow: 0 10px 20px rgba(0, 0, 0, 0.1);
-        border: 1px solid rgba(0, 0, 0, 0.05);
-        min-width: 180px;
-    }
-
-    .step:hover {
-        transform: translateY(-8px);
-        box-shadow: 0 20px 30px -10px rgba(0, 0, 0, 0.2);
-    }
-
-    .step-number {
-        width: 40px;
-        height: 40px;
-        background: #155cc0;
-        color: white;
-        border-radius: 50%;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        font-weight: bold;
-        font-size: 1.2rem;
-        margin: 0 auto 15px auto;
-        box-shadow: 0 4px 8px rgba(79, 70, 229, 0.3);
-    }
-
-    .step-title {
-        font-size: 1.3rem;
-        font-weight: 600;
-        color: #1E293B;
-        margin-bottom: 8px;
-    }
-
-    .step-sub {
-        font-size: 0.9rem;
-        color: #64748B;
-    }
-
-    .arrow {
-        font-size: 2.5rem;
-        color: #4F46E5;
-        font-weight: 300;
-        animation: pulse 1.5s infinite;
-    }
-</style>
-<body>
-
-    <?php require 'inc/header.php'; ?>
-    
-    <section class="main1">
-        <div>
-            <h2>Créer votre CV au format WAMA</h2><br>
-            <p>Générez un CV professionnel, structuré et conforme aux standards de notre entreprise en quelques clics.</p><br>
-            <a href="CreationCV.php"><button>Créer mon CV</button></a>
-            <a href="importationCV.php"><button>Importer mon CV</button></a>
-        </div>
-        <img src="images/image.png" alt="image" width="30%">
-    </section><br><br>
-
-    <h2>Pourquoi utiliser notre application?</h2><br>
-    <section class="main2">
-        <div class="card">
-            <img src="images/rapide.png" alt="erreur" width="20%">
-            <h3>Rapide</h3>
-            <p>Réduit la perte du temps et génére le CV en quelques moments</p>
-        </div>
-        <div class="card">
-            <img src="images/standard.png" alt="erreur" width="20%">
-            <h3>Standarisée</h3>
-            <p>Respect le format officiel WAMA INVEST</p>
-        </div>
-        <div class="card">
-            <img src="images/pro.png" alt="erreur" width="20%">
-            <h3>Professionnel</h3>
-            <p>Présentation claire et moderne</p>
-        </div>
-    </section><br><br>
-
-    <h2>Comment ça fonctionne?</h2><br>
-    <section class="main3">
-        <div class="steps">
-            <div class="step">
-                <div class="step-number">1</div>
-                <div class="step-title">📄 Remplir</div>
-                <div class="step-sub">ou importer un fichier</div>
+<!-- Hero Section -->
+<div class="max-w-7xl mx-auto">
+    <div class="grid lg:grid-cols-2 gap-16 items-center">
+        <div class="space-y-8">
+            <div class="inline-flex items-center px-3 py-1 rounded-full bg-secondary-fixed text-on-secondary-fixed-variant text-label-caps">
+                ✨ STANDARDISATION WAMA
             </div>
-            <div class="arrow">→</div>
-            <div class="step">
-                <div class="step-number">2</div>
-                <div class="step-title">⚙️ Transformation</div>
-                <div class="step-sub">Traitement des données</div>
-            </div>
-            <div class="arrow">→</div>
-            <div class="step">
-                <div class="step-number">3</div>
-                <div class="step-title">📥 Télécharger PDF</div>
-                <div class="step-sub">Export final</div>
+            <h1 class="text-h1 font-h1 text-primary-container max-w-lg">
+                Créez votre CV au format WAMA
+            </h1>
+            <p class="text-body-lg font-body-lg text-on-surface-variant max-w-md">
+                Générez un CV professionnel, structuré et conforme aux standards de notre entreprise en quelques clics.
+            </p>
+            <div class="flex flex-col sm:flex-row gap-4 pt-4">
+                <a href="creationCV.php" class="bg-primary-container text-white px-8 py-4 rounded-xl font-button text-button shadow-lg hover:shadow-xl transition-all active:scale-95 text-center">
+                    📄 Créer mon CV
+                </a>
+                <a href="importationCV.php" class="bg-transparent border border-secondary text-secondary px-8 py-4 rounded-xl font-button text-button hover:bg-secondary-fixed/30 transition-all active:scale-95 text-center">
+                    📂 Importer un CV
+                </a>
             </div>
         </div>
-    </section><br><br>
-    <?php require 'inc/footer.php';?>
-</body>
-</html>
+        <!-- Hero Image Showcase -->
+        <div class="relative group">
+            <div class="absolute -inset-4 bg-gradient-to-tr from-secondary-fixed/20 to-transparent rounded-[2rem] -z-10 blur-2xl"></div>
+            <div class="bg-white p-4 rounded-[2rem] border border-slate-200 shadow-2xl overflow-hidden">
+                <img class="w-full h-auto rounded-2xl shadow-sm" src="images/image.png" alt="CV WAMA">
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Features Bento Grid -->
+<section class="py-section-padding mt-12">
+    <div class="max-w-7xl mx-auto">
+        <div class="text-center mb-12 space-y-4">
+            <h2 class="text-h2 font-h2 text-primary-container">Pourquoi utiliser notre application ?</h2>
+            <p class="text-body-md font-body-md text-on-surface-variant max-w-2xl mx-auto">Une solution complète pour standardiser vos CV</p>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="bg-white p-8 rounded-xl border border-slate-100 hover:border-secondary transition-all">
+                <div class="w-12 h-12 rounded-lg bg-secondary-fixed/30 flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined text-secondary">bolt</span>
+                </div>
+                <h3 class="text-xl font-bold text-primary-container mb-3">Rapide</h3>
+                <p class="text-sm text-on-surface-variant">Générez votre CV en quelques secondes seulement</p>
+            </div>
+            <div class="bg-white p-8 rounded-xl border border-slate-100 hover:border-secondary transition-all">
+                <div class="w-12 h-12 rounded-lg bg-secondary-fixed/30 flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined text-secondary">verified</span>
+                </div>
+                <h3 class="text-xl font-bold text-primary-container mb-3">Standardisé</h3>
+                <p class="text-sm text-on-surface-variant">Respecte le format officiel WAMA INVEST</p>
+            </div>
+            <div class="bg-white p-8 rounded-xl border border-slate-100 hover:border-secondary transition-all">
+                <div class="w-12 h-12 rounded-lg bg-secondary-fixed/30 flex items-center justify-center mb-6">
+                    <span class="material-symbols-outlined text-secondary">star</span>
+                </div>
+                <h3 class="text-xl font-bold text-primary-container mb-3">Professionnel</h3>
+                <p class="text-sm text-on-surface-variant">Présentation claire et moderne</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- How it works -->
+<section class="py-section-padding">
+    <div class="max-w-7xl mx-auto text-center">
+        <h2 class="text-h2 font-h2 text-primary-container mb-12">Comment ça fonctionne ?</h2>
+        <div class="flex flex-wrap justify-center items-center gap-6">
+            <div class="bg-white rounded-xl p-8 text-center min-w-[180px] shadow-sm">
+                <div class="w-12 h-12 bg-secondary-fixed rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="material-symbols-outlined text-secondary">edit_note</span>
+                </div>
+                <h3 class="font-bold">1. Remplir</h3>
+                <p class="text-sm text-slate-500">ou importer un fichier</p>
+            </div>
+            <span class="text-3xl text-secondary">→</span>
+            <div class="bg-white rounded-xl p-8 text-center min-w-[180px] shadow-sm">
+                <div class="w-12 h-12 bg-secondary-fixed rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="material-symbols-outlined text-secondary">settings</span>
+                </div>
+                <h3 class="font-bold">2. Transformation</h3>
+                <p class="text-sm text-slate-500">Traitement des données</p>
+            </div>
+            <span class="text-3xl text-secondary">→</span>
+            <div class="bg-white rounded-xl p-8 text-center min-w-[180px] shadow-sm">
+                <div class="w-12 h-12 bg-secondary-fixed rounded-full flex items-center justify-center mx-auto mb-4">
+                    <span class="material-symbols-outlined text-secondary">download</span>
+                </div>
+                <h3 class="font-bold">3. Télécharger PDF</h3>
+                <p class="text-sm text-slate-500">Export final</p>
+            </div>
+        </div>
+    </div>
+</section>
+
+<!-- Bottom CTA -->
+<section class="py-16 bg-primary-container text-white rounded-2xl max-w-7xl mx-auto mt-12">
+    <div class="text-center">
+        <h2 class="text-3xl font-bold mb-4">Prêt à créer votre CV ?</h2>
+        <p class="text-lg text-slate-300 mb-8">Rejoignez les professionnels qui utilisent WAMA</p>
+        <div class="flex gap-4 justify-center">
+            <a href="creationCV.php" class="bg-white text-primary-container px-8 py-3 rounded-xl font-button shadow-lg hover:bg-slate-100 transition-all">Créer mon CV</a>
+            <a href="importationCV.php" class="bg-transparent border border-white/30 text-white px-8 py-3 rounded-xl hover:bg-white/10 transition-all">Importer un CV</a>
+        </div>
+    </div>
+</section>
+
+<?php require_once 'inc/footer.php'; ?>

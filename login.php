@@ -1,12 +1,34 @@
 <?php
 session_start();
+require_once 'db.php';
+
+$error = '';
+
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $username = $_POST['username'] ?? '';
+    $password = $_POST['password'] ?? '';
+    
+    $stmt = $pdo->prepare("SELECT * FROM users WHERE username = ?");
+    $stmt->execute([$username]);
+    $user = $stmt->fetch();
+    
+    if ($user && $password === $user['password']) {
+        $_SESSION['user_id'] = $user['id'];
+        $_SESSION['username'] = $user['username'];
+        $_SESSION['role'] = $user['role'];
+        header("Location: home.php");
+        exit;
+    } else {
+        $error = "Identifiants incorrects";
+    }
+}
 ?>
 <!DOCTYPE html>
 <html class="light" lang="fr">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WAMA | Générateur de CV Professionnel</title>
+    <title>Connexion - WAMA</title>
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
@@ -69,26 +91,6 @@ session_start();
                         lg: "0.5rem",
                         xl: "0.75rem",
                         full: "9999px"
-                    },
-                    spacing: {
-                        "stack-lg": "32px",
-                        "container-max": "1440px",
-                        "margin-page": "40px",
-                        "unit": "4px",
-                        "gutter": "24px",
-                        "stack-sm": "8px",
-                        "stack-md": "16px",
-                        "section-padding": "64px"
-                    },
-                    fontSize: {
-                        "label-caps": ["12px", { lineHeight: "1", letterSpacing: "0.05em", fontWeight: "600" }],
-                        "button": ["14px", { lineHeight: "1", letterSpacing: "0.01em", fontWeight: "500" }],
-                        "body-md": ["16px", { lineHeight: "1.6", letterSpacing: "0", fontWeight: "400" }],
-                        "h3": ["24px", { lineHeight: "1.3", letterSpacing: "-0.01em", fontWeight: "500" }],
-                        "body-lg": ["18px", { lineHeight: "1.6", letterSpacing: "0", fontWeight: "400" }],
-                        "h1": ["48px", { lineHeight: "1.1", letterSpacing: "-0.02em", fontWeight: "600" }],
-                        "h2": ["30px", { lineHeight: "1.2", letterSpacing: "-0.01em", fontWeight: "600" }],
-                        "body-sm": ["14px", { lineHeight: "1.5", letterSpacing: "0", fontWeight: "400" }]
                     }
                 }
             }
@@ -99,32 +101,56 @@ session_start();
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
     </style>
 </head>
-<body class="bg-surface text-on-surface">
+<body class="bg-surface text-on-surface min-h-screen flex items-center justify-center">
 
-<!-- Top Navigation Bar -->
-<nav class="fixed top-0 w-full z-50 bg-white/90 backdrop-blur-md border-b border-slate-200 shadow-sm">
-    <div class="flex justify-between items-center px-6 h-16 w-full max-w-7xl mx-auto">
-        <div class="flex items-center gap-2">
-            <a href="home.php">
-                <img src="images/logo WAMA.png" alt="error" width="13%">
-            </a>
+<div class="max-w-md w-full mx-4">
+    <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
+        <div class="bg-primary-container px-8 py-6 text-center">
+            <div class="flex justify-center mb-4">
+                <img src="images/logo WAMA.png" alt="error" width="20%">
+            </div>
+            <p class="text-slate-300 text-sm mt-1">Générateur de CV professionnel</p>
         </div>
-        <div class="hidden md:flex items-center gap-8">
-            <a href="home.php" class="text-[#0B1F3A] font-sans text-sm font-semibold tracking-tight">Accueil</a>
-            <a href="creationCV.php" class="text-slate-400 hover:bg-slate-50 text-sm font-semibold tracking-tight p-2 rounded-lg transition-all">Créer un CV</a>
-            <a href="importationCV.php" class="text-slate-400 hover:bg-slate-50 text-sm font-semibold tracking-tight p-2 rounded-lg transition-all">Importer un CV</a>
-            <a href="liste_cv.php" class="text-slate-400 hover:bg-slate-50 text-sm font-semibold tracking-tight p-2 rounded-lg transition-all">CV stockés</a>
-        </div>
-        <div class="flex items-center gap-4">
-            <?php if (isset($_SESSION['user_id'])): ?>
-                <span class="text-sm text-slate-600 hidden md:block">👋 <?= htmlspecialchars($_SESSION['username']) ?></span>
-                <a href="logout.php" class="text-sm font-button px-4 py-2 text-red-600 hover:bg-red-50 rounded-lg transition-all">Déconnexion</a>
-            <?php else: ?>
-                <a href="login.php" class="text-sm font-button px-4 py-2 text-primary-container hover:bg-slate-50 rounded-lg transition-all">Connexion</a>
+        
+
+        <div class="p-8">
+            <h2 class="text-xl font-bold text-primary-container mb-6 text-center">Connexion</h2>
+            
+            <?php if ($error): ?>
+                <div class="mb-4 p-3 bg-red-50 border border-red-200 rounded-xl text-red-600 text-sm text-center">
+                    <?= htmlspecialchars($error) ?>
+                </div>
             <?php endif; ?>
+            
+            <form method="POST" class="space-y-5">
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Nom d'utilisateur</label>
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">person</span>
+                        <input type="text" name="username" placeholder="admin" required autofocus class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all">
+                    </div>
+                </div>
+                
+                <div>
+                    <label class="block text-sm font-medium text-slate-700 mb-2">Mot de passe</label>
+                    <div class="relative">
+                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">lock</span>
+                        <input type="password" name="password" placeholder="••••••••" required class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all">
+                    </div>
+                </div>
+                
+                <button type="submit" class="w-full bg-primary-container text-white py-3 rounded-xl font-button shadow-lg hover:shadow-xl transition-all active:scale-95 mt-6">
+                    Se connecter
+                </button>
+            </form>
+            
+            <div class="mt-6 text-center text-xs text-slate-400">
+                <p>Application interne WAMA INVEST</p>
+                <p class="mt-1">© 2026 - Tous droits réservés</p>
+            </div>
         </div>
     </div>
-</nav>
+</div>
 
-<!-- Main content container avec padding top pour la navbar fixe -->
-<main class="pt-24 pb-12 px-6 min-h-screen">
+</body>
+</html>
