@@ -145,8 +145,6 @@ $html = "
 
     <h1>" . strtoupper(htmlspecialchars($nom)) . " " . ucfirst(htmlspecialchars($prenom)) . "</h1>
     <div class='sous-titre'>" . htmlspecialchars($poste) . "</div>
-    <div class='contact'>" . htmlspecialchars($email) . " | " . htmlspecialchars($telephone) . "</div>
-
     <div class='section'>
         <h2>COMPÉTENCES PROFESSIONNELLES</h2>
         $competences
@@ -180,6 +178,6 @@ $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
 
 ob_end_clean();
-$dompdf->stream("CV_WAMA.pdf", ["Attachment" => true]);
+$dompdf->stream("CV $nom $prenom.pdf", ["Attachment" => true]);
 exit();
 ?>

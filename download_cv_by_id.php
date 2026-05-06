@@ -41,8 +41,8 @@ $html = "
 <div class='header'>
     <img src='$logo_base64' class='logo'>
     <div class='contact-info'>
-        ☎ +(212) 520 673 877<br>
-        ✉ info@wama-invest.com
+        +(212) 520 673 877<br>
+        info@wama-invest.com
     </div>
 </div>
 
