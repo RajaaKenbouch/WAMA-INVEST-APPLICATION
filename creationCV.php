@@ -114,7 +114,7 @@ $experiences_get = $data['experiences'] ?? [];
                                     <input name="exp_entreprise[]" value="<?= htmlspecialchars($e['entreprise'] ?? '') ?>" placeholder="Entreprise" class="px-3 py-2 rounded-lg border border-slate-200">
                                 </div>
                                 <textarea name="exp_description[]" placeholder="Description" class="w-full px-3 py-2 rounded-lg border border-slate-200"><?= htmlspecialchars($e['description'] ?? '') ?></textarea>
-                                <input name="exp_outils[]" placeholder="Outils (ex: PHP, MySQL)" class="w-full px-3 py-2 rounded-lg border border-slate-200">
+                                <input name="exp_outils[]" value="<?= htmlspecialchars($e['outils'] ?? '') ?>" placeholder="Outils (ex: PHP, MySQL)" class="w-full px-3 py-2 rounded-lg border border-slate-200">
                             </div>
                         <?php endforeach; ?>
                     <?php else: ?>

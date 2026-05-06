@@ -2,114 +2,396 @@
 
 require 'vendor/autoload.php';
 
-if (!isset($_FILES['cv_file'])) {
-    die("Aucun fichier envoyé");
+// =====================
+// CONFIGURATION
+// =====================
+$geminiApiKey = 'AIzaSyAwOMqXzt_kve7R6TthWZMWdHNjce7Wb1E'; // Get free at aistudio.google.com
+
+// =====================
+// VÉRIFICATION FICHIER
+// =====================
+if (!isset($_FILES['cv_file']) || $_FILES['cv_file']['error'] !== UPLOAD_ERR_OK) {
+    die(json_encode(["error" => "Aucun fichier envoyé ou erreur d'upload"]));
 }
 
-$file = $_FILES['cv_file'];
-$type = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
+$file    = $_FILES['cv_file'];
+$type    = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 $tmpPath = $file['tmp_name'];
 
+// =====================
+// EXTRACTION TEXTE BRUT
+// =====================
 $text = "";
 
+if ($type === "pdf") {
+    try {
+        $parser = new \Smalot\PdfParser\Parser();
+        $pdf    = $parser->parseFile($tmpPath);
+        $text   = $pdf->getText();
+        $text   = preg_replace('/[^\x20-\x7E\xC0-\xFF\n\r\t]/', ' ', $text);
+    } catch (Exception $e) {
+        die(json_encode(["error" => "Erreur lecture PDF: " . $e->getMessage()]));
+    }
+
+} elseif ($type === "docx") {
+    try {
+        $phpWord = \PhpOffice\PhpWord\IOFactory::load($tmpPath);
+        foreach ($phpWord->getSections() as $section) {
+            foreach ($section->getElements() as $element) {
+                if (method_exists($element, 'getText')) {
+                    $text .= $element->getText() . " ";
+                } elseif (method_exists($element, 'getElements')) {
+                    foreach ($element->getElements() as $child) {
+                        if (method_exists($child, 'getText')) {
+                            $text .= $child->getText() . " ";
+                        }
+                    }
+                }
+            }
+        }
+    } catch (Exception $e) {
+        die(json_encode(["error" => "Erreur lecture DOCX: " . $e->getMessage()]));
+    }
+
+} elseif ($type === "txt") {
+    $text = file_get_contents($tmpPath);
+    if ($text === false) {
+        die(json_encode(["error" => "Erreur lecture fichier TXT"]));
+    }
+
+} else {
+    die(json_encode(["error" => "Format non supporté. Utilisez PDF, DOCX ou TXT"]));
+}
+
 // =====================
-// EXTRACTION TEXTE BRUT (améliorée)
+// VÉRIFICATION TEXTE
 // =====================
-if ($type == "pdf") {
-    $parser = new \Smalot\PdfParser\Parser();
-    $pdf = $parser->parseFile($tmpPath);
-    $text = $pdf->getText();
-    
-    // 🔧 Nettoyage spécifique PDF
-    $text = preg_replace('/[^\x20-\x7E\xC0-\xFF\n\r\t]/', ' ', $text);
-    
-} elseif ($type == "docx") {
-    $phpWord = \PhpOffice\PhpWord\IOFactory::load($tmpPath);
-    foreach ($phpWord->getSections() as $section) {
-        foreach ($section->getElements() as $element) {
-            if (method_exists($element, 'getText')) {
-                $text .= $element->getText() . " ";
+$text = trim($text);
+if (empty($text)) {
+    die(json_encode(["error" => "Aucun texte extrait. Le fichier est peut-être scanné ou protégé."]));
+}
+
+// =====================
+// PROMPT UNIVERSEL
+// =====================
+$prompt = <<<PROMPT
+You are a world-class CV/Resume parser with 20 years of experience reading resumes from all countries, cultures, and formats.
+
+Your task: Extract ALL useful information from the CV below.
+
+=== CRITICAL RULES ===
+1. NAME DETECTION (most important):
+   - The name is almost ALWAYS at the very top of the CV
+   - It has NO label like "Name:" or "Nom:" — it's just written directly
+   - It can be: "BENALI Mohamed" / "Sarah Martin" / "EL FASSI Ahmed" / "Jean-Pierre DUPONT"
+   - ALL CAPS word = usually last name / Mixed case = usually first name
+   - Compound names: "El Fassi", "Ben Ali", "Van Der Berg", "Jean-Pierre" → keep them together
+   - Arabic, Asian, African, European names → all supported
+   - If you see 2-4 words at the very top that look like a human name → that's the name
+
+2. CONTACT INFO:
+   - Email: any format (gmail, yahoo, outlook, company domain...)
+   - Phone: ANY country format (+212, +33, +1, 06, 07, 00212...)
+   - LinkedIn / GitHub / Portfolio URLs if present
+   - City / Country if mentioned
+
+3. SECTIONS WITHOUT LABELS:
+   - Skills may appear as bullet points, tags, icons, or inline text
+   - Experience may have no "Experience" header — look for company names + dates
+   - Education may have no header — look for school names + degrees + years
+   - Languages may be listed anywhere
+
+4. INCOMPLETE OR MISSING DATA:
+   - If something is not found → use empty string ""
+   - NEVER invent or guess data
+   - If name has only one part → put it in "nom", leave "prenom" empty
+
+5. EXPERIENCES MUST BE VERBATIM:
+    - Do NOT rewrite, summarize, or regenerate experiences
+    - Extract experience descriptions exactly as written in the CV
+    - Keep original wording and order
+
+6. TOOLS EXTRACTION:
+    - For each experience, extract tools/technologies from the description or bullets
+    - Return them in "outils" as a comma-separated list
+    - If no tools are mentioned, use empty string ""
+
+7. OUTPUT FORMAT:
+   - Return ONLY a valid JSON object
+   - No markdown, no backticks, no explanation
+   - No text before or after the JSON
+   - Use UTF-8 for special characters (é, à, ñ, etc.)
+   - IMPORTANT: Make sure the JSON is complete and properly closed with all brackets and braces
+
+=== JSON STRUCTURE ===
+{
+  "nom": "LAST NAME in uppercase",
+  "prenom": "First name capitalized",
+  "email": "email@domain.com",
+  "telephone": "phone number as written",
+  "ville": "city",
+  "pays": "country",
+  "linkedin": "linkedin URL or username",
+  "github": "github URL or username",
+  "portfolio": "website or portfolio URL",
+  "titre": "job title or professional headline",
+  "resume": "2-3 sentence professional summary",
+  "competences_techniques": "tech skill1, skill2, skill3...",
+  "competences_soft": "soft skill1, skill2...",
+  "langues": "Language1 (level), Language2 (level)",
+  "formations": [
+    {
+      "diplome": "degree name",
+      "etablissement": "school or university name",
+      "annee": "year or period"
+    }
+  ],
+  "experiences": [
+    {
+      "poste": "job title",
+      "entreprise": "company name",
+      "periode": "start - end dates",
+            "description": "verbatim text from the CV (no rewriting)",
+            "outils": "tool1, tool2"
+    }
+  ],
+  "certifications": "cert1, cert2...",
+  "projets": "project1, project2...",
+  "centres_interet": "interest1, interest2..."
+}
+
+=== NAME EXAMPLES ===
+Top of CV says "BENALI Mohamed"        → nom: "BENALI",       prenom: "Mohamed"
+Top of CV says "Sarah MARTIN"          → nom: "MARTIN",       prenom: "Sarah"
+Top of CV says "Ahmed El Fassi"        → nom: "EL FASSI",     prenom: "Ahmed"
+Top of CV says "jean-pierre dupont"    → nom: "DUPONT",       prenom: "Jean-Pierre"
+Top of CV says "Yuki Tanaka"           → nom: "TANAKA",       prenom: "Yuki"
+Top of CV says "Maria Garcia Lopez"    → nom: "GARCIA LOPEZ", prenom: "Maria"
+Top of CV says "Li Wei"                → nom: "LI",           prenom: "Wei"
+Top of CV says "Fatima-Zahra IDRISSI"  → nom: "IDRISSI",      prenom: "Fatima-Zahra"
+Top of CV says "VAN DER BERG Johan"    → nom: "VAN DER BERG", prenom: "Johan"
+Top of CV says "O'Brien Patrick"       → nom: "O'BRIEN",      prenom: "Patrick"
+
+=== CV TO ANALYZE ===
+
+PROMPT;
+
+$prompt .= "\n\n" . substr($text, 0, 6000);
+
+// =====================
+// APPEL GEMINI API
+// =====================
+$url     = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" . $geminiApiKey;
+$payload = json_encode([
+    'contents' => [[
+        'parts' => [[
+            'text' => $prompt
+        ]]
+    ]],
+    'generationConfig' => [
+        'temperature'     => 0.1,
+        'maxOutputTokens' => 8192,  // ✅ augmenté pour éviter la troncature JSON
+    ]
+], JSON_INVALID_UTF8_SUBSTITUTE);
+
+if ($payload === false) {
+    die(json_encode(["error" => "Erreur d'encodage de la requête : " . json_last_error_msg()]));
+}
+
+$ch = curl_init($url);
+curl_setopt_array($ch, [
+    CURLOPT_RETURNTRANSFER => true,
+    CURLOPT_POST           => true,
+    CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
+    CURLOPT_POSTFIELDS     => $payload,
+    CURLOPT_TIMEOUT        => 60,   // ✅ augmenté pour laisser le temps à Gemini
+]);
+
+$response  = curl_exec($ch);
+$httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+$curlError = curl_error($ch);
+curl_close($ch);
+
+// =====================
+// GESTION ERREURS CURL
+// =====================
+if ($curlError) {
+    die(json_encode(["error" => "Erreur de connexion: " . $curlError]));
+}
+
+if ($httpCode !== 200) {
+    $errorData = json_decode($response, true);
+    $errorMsg  = $errorData['error']['message'] ?? "Erreur API HTTP $httpCode";
+    die(json_encode(["error" => "Gemini API: " . $errorMsg]));
+}
+
+// =====================
+// PARSING RÉPONSE GEMINI
+// =====================
+$geminiData = json_decode($response, true, 512, JSON_INVALID_UTF8_SUBSTITUTE);
+
+if (!isset($geminiData['candidates'][0]['content']['parts'][0]['text'])) {
+    die(json_encode(["error" => "Réponse Gemini invalide ou vide"]));
+}
+
+$rawText = $geminiData['candidates'][0]['content']['parts'][0]['text'];
+
+// Nettoyage markdown
+$rawText = preg_replace('/^```(?:json)?\s*/i', '', trim($rawText));
+$rawText = preg_replace('/\s*```$/i', '', $rawText);
+$rawText = trim($rawText);
+
+// ----------------------
+// Tentative 1: parser directement
+// ----------------------
+$parsed = json_decode($rawText, true, 512, JSON_INVALID_UTF8_SUBSTITUTE);
+
+// ----------------------
+// Tentative 2: extraire JSON avec regex
+// ----------------------
+if (!$parsed || !is_array($parsed)) {
+    if (preg_match('/\{.*\}/s', $rawText, $match)) {
+        $parsed = json_decode($match[0], true, 512, JSON_INVALID_UTF8_SUBSTITUTE);
+    }
+}
+
+// ----------------------
+// Tentative 3: réparer JSON tronqué (accolades/crochets manquants)
+// ----------------------
+if (!$parsed || !is_array($parsed)) {
+    $fixed        = $rawText;
+
+    // Fermer les chaînes ouvertes en comptant les guillemets non échappés
+    $cleanFixed = preg_replace('/\\\\\"/', '', $fixed);
+    if (substr_count($cleanFixed, '"') % 2 !== 0) {
+        $fixed .= '"';
+    }
+
+    $openBraces   = substr_count($fixed, '{') - substr_count($fixed, '}');
+    $openBrackets = substr_count($fixed, '[') - substr_count($fixed, ']');
+
+    // Fermer les tableaux ouverts
+    for ($i = 0; $i < $openBrackets; $i++) $fixed .= ']';
+
+    // Fermer les objets ouverts
+    for ($i = 0; $i < $openBraces; $i++) $fixed .= '}';
+
+    $parsed = json_decode($fixed, true, 512, JSON_INVALID_UTF8_SUBSTITUTE);
+}
+
+// ----------------------
+// Échec total
+// ----------------------
+if (!$parsed || !is_array($parsed)) {
+    die(json_encode([
+        "error" => "Impossible de parser la réponse Gemini",
+        "raw"   => $rawText
+    ]));
+}
+
+// =====================
+// FALLBACK NOM
+// =====================
+if (empty($parsed['nom'])) {
+    $lines = explode("\n", $text);
+    foreach ($lines as $line) {
+        $line = trim($line);
+        if (
+            strlen($line) > 3 &&
+            strlen($line) < 60 &&
+            !str_contains($line, '@') &&
+            !str_contains($line, 'http') &&
+            !preg_match('/^\+?[0-9\s\-]{7,}$/', $line)
+        ) {
+            $parts = explode(' ', $line);
+            if (count($parts) >= 2) {
+                foreach ($parts as $part) {
+                    if ($part === strtoupper($part) && strlen($part) > 2) {
+                        $parsed['nom'] = $part;
+                    } else {
+                        $parsed['prenom'] = ucfirst(strtolower($part));
+                    }
+                }
+                if (empty($parsed['nom'])) {
+                    $parsed['prenom'] = ucfirst(strtolower($parts[0]));
+                    $parsed['nom']    = strtoupper($parts[1]);
+                }
+                break;
             }
         }
     }
-} elseif ($type == "txt") {
-    $text = file_get_contents($tmpPath);
-} else {
-    die("Format non supporté");
-}
-
-// 🔧 Si le texte est vide, on affiche une erreur
-if (empty(trim($text))) {
-    die("Aucun texte extrait du fichier. Vérifie le format.");
 }
 
 // =====================
-// EXTRACTION DES INFOS (simplifiée)
+// NORMALISATION POUR LE FORMULAIRE
 // =====================
-$email = "";
-if (preg_match('/[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}/i', $text, $match)) {
-    $email = $match[0];
-}
+$competences = trim(implode(' | ', array_filter([
+    $parsed['competences_techniques'] ?? '',
+    $parsed['competences_soft'] ?? ''
+])));
 
-$telephone = "";
-if (preg_match('/(?:\+212|0)[0-9\s\-]{9,13}/', $text, $match)) {
-    $telephone = trim($match[0]);
-}
-
-$nom = "";
-$prenom = "";
-$lines = explode("\n", $text);
-foreach ($lines as $line) {
-    $line = trim($line);
-    if (preg_match('/^[A-Za-zÀ-ÿ]+\s+[A-Za-zÀ-ÿ]+$/', $line)) {
-        $parts = explode(' ', $line);
-        if (count($parts) >= 2) {
-            $prenom = ucfirst(strtolower($parts[0]));
-            $nom = strtoupper($parts[1]);
-            break;
-        }
+$diplomes = [];
+if (!empty($parsed['formations']) && is_array($parsed['formations'])) {
+    foreach ($parsed['formations'] as $f) {
+        $diplomes[] = [
+            'annee'        => $f['annee'] ?? '',
+            'titre'        => $f['diplome'] ?? '',
+            'etablissement'=> $f['etablissement'] ?? ''
+        ];
     }
+} elseif (!empty($parsed['formations']) && is_string($parsed['formations'])) {
+    $diplomes[] = [
+        'annee'         => '',
+        'titre'         => $parsed['formations'],
+        'etablissement' => ''
+    ];
 }
 
-$competences = "";
-if (preg_match('/(?:COMPETENCES|Compétences|SKILLS)[\s\-:]*\n?(.*?)(?=\n\s*(?:LANGUES|EXPERIENCES|FORMATION|DIPLOMES|PROFIL|$))/is', $text, $match)) {
-    $competences = trim($match[1]);
-    $competences = preg_replace('/[\-\•\*]\s*/', '', $competences);
-    $competences = preg_replace('/\s+/', ' ', $competences);
-}
-
-$langues = "";
-if (preg_match('/(?:LANGUES|Langues|LANGUAGES)[\s\-:]*\n?(.*?)(?=\n\s*(?:COMPETENCES|EXPERIENCES|FORMATION|DIPLOMES|PROFIL|$))/is', $text, $match)) {
-    $langues = trim($match[1]);
-    $langues = preg_replace('/[\-\•\*]\s*/', '', $langues);
-}
-
-// =====================
-// FALLBACK : si aucune compétence trouvée, on prend les lignes qui commencent par -
-// =====================
-if (empty($competences)) {
-    preg_match_all('/^-\s*(.+)$/m', $text, $matches);
-    if (!empty($matches[1])) {
-        $competences = implode(", ", $matches[1]);
+$experiences = [];
+if (!empty($parsed['experiences']) && is_array($parsed['experiences'])) {
+    foreach ($parsed['experiences'] as $e) {
+        $experiences[] = [
+            'periode'     => $e['periode'] ?? '',
+            'poste'       => $e['poste'] ?? '',
+            'entreprise'  => $e['entreprise'] ?? '',
+            'description' => $e['description'] ?? '',
+            'outils'      => $e['outils'] ?? ''
+        ];
     }
+} elseif (!empty($parsed['experiences']) && is_string($parsed['experiences'])) {
+    $experiences[] = [
+        'periode'     => '',
+        'poste'       => '',
+        'entreprise'  => '',
+        'description' => $parsed['experiences'],
+        'outils'      => ''
+    ];
 }
 
 // =====================
-// CONSTRUCTION JSON
+// CONSTRUCTION JSON FINAL
 // =====================
-$json = json_encode([
-    "nom" => $nom,
-    "prenom" => $prenom,
-    "email" => $email,
-    "telephone" => $telephone,
-    "competences" => $competences,
-    "langues" => $langues,
-    "texte_brut" => substr($text, 0, 5000)
-], JSON_UNESCAPED_UNICODE);
+$finalJson = json_encode([
+    'nom'            => strtoupper(trim($parsed['nom'] ?? '')),
+    'prenom'         => ucfirst(strtolower(trim($parsed['prenom'] ?? ''))),
+    'poste'          => trim($parsed['titre'] ?? ''),
+    'email'          => strtolower(trim($parsed['email'] ?? '')),
+    'telephone'      => trim($parsed['telephone'] ?? ''),
+    'competences'    => $competences,
+    'langues'        => trim($parsed['langues'] ?? ''),
+    'certifications' => trim($parsed['certifications'] ?? ''),
+    'diplomes'       => $diplomes,
+    'experiences'    => $experiences
+], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 
 // =====================
 // REDIRECTION
 // =====================
 $logo_type = $_POST['logo_type'] ?? 'invest';
-header("Location: creationCV.php?data=" . urlencode($json) . "&logo_type=" . $logo_type);
+$texte_brut = substr($text, 0, 3000);
+header(
+    "Location: creationCV.php?data=" . urlencode($finalJson)
+    . "&logo_type=" . urlencode($logo_type)
+    . "&texte_brut=" . urlencode($texte_brut)
+);
 exit();
