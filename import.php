@@ -107,21 +107,29 @@ Your task: Extract ALL useful information from the CV below.
    - If name has only one part → put it in "nom", leave "prenom" empty
 
 5. EXPERIENCES MUST BE VERBATIM:
-    - Do NOT rewrite, summarize, or regenerate experiences
-    - Extract experience descriptions exactly as written in the CV
-    - Keep original wording and order
+   - Do NOT rewrite, summarize, or regenerate experiences
+   - Extract experience descriptions exactly as written in the CV
+   - Keep original wording and order
 
 6. TOOLS EXTRACTION:
-    - For each experience, extract tools/technologies from the description or bullets
-    - Return them in "outils" as a comma-separated list
-    - If no tools are mentioned, use empty string ""
+   - For each experience, extract tools/technologies from the description or bullets
+   - Return them in "outils" as a comma-separated list
+   - If no tools are mentioned, use empty string ""
 
-7. OUTPUT FORMAT:
+7. EXPERIENCES WITHOUT DATES — THIS IS MANDATORY:
+   - EVERY experience found in the CV MUST be included, even if it has NO date at all
+   - If no date/period is found for an experience → use "" for "periode"
+   - NEVER skip or omit an experience just because it lacks a date
+   - An experience with no date is still a valid experience — include it
+   - Do not use "N/A", "Unknown", or any placeholder — just use ""
+
+8. OUTPUT FORMAT:
    - Return ONLY a valid JSON object
    - No markdown, no backticks, no explanation
    - No text before or after the JSON
    - Use UTF-8 for special characters (é, à, ñ, etc.)
    - IMPORTANT: Make sure the JSON is complete and properly closed with all brackets and braces
+   - IMPORTANT: Do NOT truncate the experiences array — include every single experience
 
 === JSON STRUCTURE ===
 {
@@ -143,16 +151,16 @@ Your task: Extract ALL useful information from the CV below.
     {
       "diplome": "degree name",
       "etablissement": "school or university name",
-      "annee": "year or period"
+      "annee": "year or period, or empty string if unknown"
     }
   ],
   "experiences": [
     {
-      "poste": "job title",
-      "entreprise": "company name",
-      "periode": "start - end dates",
-            "description": "verbatim text from the CV (no rewriting)",
-            "outils": "tool1, tool2"
+      "poste": "job title, or empty string if unknown",
+      "entreprise": "company name, or empty string if unknown",
+      "periode": "start - end dates, or empty string if no date found",
+      "description": "verbatim text from the CV (no rewriting), or empty string",
+      "outils": "tool1, tool2, or empty string"
     }
   ],
   "certifications": "cert1, cert2...",
@@ -172,11 +180,22 @@ Top of CV says "Fatima-Zahra IDRISSI"  → nom: "IDRISSI",      prenom: "Fatima-
 Top of CV says "VAN DER BERG Johan"    → nom: "VAN DER BERG", prenom: "Johan"
 Top of CV says "O'Brien Patrick"       → nom: "O'BRIEN",      prenom: "Patrick"
 
+=== EXPERIENCE EXAMPLES (with and without dates) ===
+Example WITH date:
+  poste: "Développeur Web", entreprise: "Acme Corp", periode: "Jan 2022 - Déc 2023"
+
+Example WITHOUT date (still include it!):
+  poste: "Stage PFE", entreprise: "StartupXYZ", periode: ""
+
+Example with ONLY company, no title, no date (still include it!):
+  poste: "", entreprise: "FreelanceProject", periode: ""
+
 === CV TO ANALYZE ===
 
 PROMPT;
 
-$prompt .= "\n\n" . substr($text, 0, 6000);
+// Use up to 12000 chars to avoid cutting off experiences
+$prompt .= "\n\n" . substr($text, 0, 12000);
 
 // =====================
 // APPEL GEMINI API
@@ -190,7 +209,7 @@ $payload = json_encode([
     ]],
     'generationConfig' => [
         'temperature'     => 0.1,
-        'maxOutputTokens' => 8192,  // ✅ augmenté pour éviter la troncature JSON
+        'maxOutputTokens' => 8192,
     ]
 ], JSON_INVALID_UTF8_SUBSTITUTE);
 
@@ -204,7 +223,7 @@ curl_setopt_array($ch, [
     CURLOPT_POST           => true,
     CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
     CURLOPT_POSTFIELDS     => $payload,
-    CURLOPT_TIMEOUT        => 60,   // ✅ augmenté pour laisser le temps à Gemini
+    CURLOPT_TIMEOUT        => 60,
 ]);
 
 $response  = curl_exec($ch);
@@ -256,25 +275,27 @@ if (!$parsed || !is_array($parsed)) {
 }
 
 // ----------------------
-// Tentative 3: réparer JSON tronqué (accolades/crochets manquants)
+// Tentative 3: réparer JSON tronqué
 // ----------------------
 if (!$parsed || !is_array($parsed)) {
-    $fixed        = $rawText;
+    $fixed = $rawText;
 
-    // Fermer les chaînes ouvertes en comptant les guillemets non échappés
+    // Remove trailing comma before closing bracket/brace (common truncation artifact)
+    $fixed = preg_replace('/,\s*$/', '', $fixed);
+    $fixed = preg_replace('/,\s*([\}\]])/', '$1', $fixed);
+
+    // Close open strings
     $cleanFixed = preg_replace('/\\\\\"/', '', $fixed);
     if (substr_count($cleanFixed, '"') % 2 !== 0) {
         $fixed .= '"';
     }
 
-    $openBraces   = substr_count($fixed, '{') - substr_count($fixed, '}');
+    // Close open arrays and objects
     $openBrackets = substr_count($fixed, '[') - substr_count($fixed, ']');
+    $openBraces   = substr_count($fixed, '{') - substr_count($fixed, '}');
 
-    // Fermer les tableaux ouverts
     for ($i = 0; $i < $openBrackets; $i++) $fixed .= ']';
-
-    // Fermer les objets ouverts
-    for ($i = 0; $i < $openBraces; $i++) $fixed .= '}';
+    for ($i = 0; $i < $openBraces; $i++)   $fixed .= '}';
 
     $parsed = json_decode($fixed, true, 512, JSON_INVALID_UTF8_SUBSTITUTE);
 }
@@ -323,39 +344,29 @@ if (empty($parsed['nom'])) {
 }
 
 // =====================
-// NORMALISATION POUR LE FORMULAIRE
+// NORMALISATION EXPÉRIENCES
 // =====================
-$competences = trim(implode(' | ', array_filter([
-    $parsed['competences_techniques'] ?? '',
-    $parsed['competences_soft'] ?? ''
-])));
-
-$diplomes = [];
-if (!empty($parsed['formations']) && is_array($parsed['formations'])) {
-    foreach ($parsed['formations'] as $f) {
-        $diplomes[] = [
-            'annee'        => $f['annee'] ?? '',
-            'titre'        => $f['diplome'] ?? '',
-            'etablissement'=> $f['etablissement'] ?? ''
-        ];
-    }
-} elseif (!empty($parsed['formations']) && is_string($parsed['formations'])) {
-    $diplomes[] = [
-        'annee'         => '',
-        'titre'         => $parsed['formations'],
-        'etablissement' => ''
-    ];
-}
-
 $experiences = [];
 if (!empty($parsed['experiences']) && is_array($parsed['experiences'])) {
     foreach ($parsed['experiences'] as $e) {
+        // Skip only if ALL fields are completely empty (truly blank entry)
+        $poste       = trim((string)($e['poste']       ?? ''));
+        $entreprise  = trim((string)($e['entreprise']  ?? ''));
+        $description = trim((string)($e['description'] ?? ''));
+        $periode     = trim((string)($e['periode']     ?? ''));
+        $outils      = trim((string)($e['outils']      ?? ''));
+
+        // Keep the experience as long as at least one meaningful field has content
+        if ($poste === '' && $entreprise === '' && $description === '') {
+            continue; // truly empty entry, skip
+        }
+
         $experiences[] = [
-            'periode'     => $e['periode'] ?? '',
-            'poste'       => $e['poste'] ?? '',
-            'entreprise'  => $e['entreprise'] ?? '',
-            'description' => $e['description'] ?? '',
-            'outils'      => $e['outils'] ?? ''
+            'periode'     => $periode,      // empty string if no date — NOT skipped
+            'poste'       => $poste,
+            'entreprise'  => $entreprise,
+            'description' => $description,
+            'outils'      => $outils,
         ];
     }
 } elseif (!empty($parsed['experiences']) && is_string($parsed['experiences'])) {
@@ -363,39 +374,74 @@ if (!empty($parsed['experiences']) && is_array($parsed['experiences'])) {
         'periode'     => '',
         'poste'       => '',
         'entreprise'  => '',
-        'description' => $parsed['experiences'],
-        'outils'      => ''
+        'description' => trim($parsed['experiences']),
+        'outils'      => '',
     ];
 }
+
+// =====================
+// NORMALISATION FORMATIONS
+// =====================
+$diplomes = [];
+if (!empty($parsed['formations']) && is_array($parsed['formations'])) {
+    foreach ($parsed['formations'] as $f) {
+        $titre          = trim((string)($f['diplome']        ?? ''));
+        $etablissement  = trim((string)($f['etablissement']  ?? ''));
+        $annee          = trim((string)($f['annee']          ?? ''));
+
+        if ($titre === '' && $etablissement === '') continue;
+
+        $diplomes[] = [
+            'annee'         => $annee,
+            'titre'         => $titre,
+            'etablissement' => $etablissement,
+        ];
+    }
+} elseif (!empty($parsed['formations']) && is_string($parsed['formations'])) {
+    $diplomes[] = [
+        'annee'         => '',
+        'titre'         => trim($parsed['formations']),
+        'etablissement' => '',
+    ];
+}
+
+// =====================
+// NORMALISATION COMPÉTENCES
+// =====================
+$competences = trim(implode(' | ', array_filter([
+    trim((string)($parsed['competences_techniques'] ?? '')),
+    trim((string)($parsed['competences_soft']       ?? '')),
+])));
 
 // =====================
 // CONSTRUCTION JSON FINAL
 // =====================
 $finalData = [
-    'nom'            => strtoupper(trim($parsed['nom'] ?? '')),
-    'prenom'         => ucfirst(strtolower(trim($parsed['prenom'] ?? ''))),
-    'poste'          => trim($parsed['titre'] ?? ''),
-    'email'          => strtolower(trim($parsed['email'] ?? '')),
-    'telephone'      => trim($parsed['telephone'] ?? ''),
+    'nom'            => strtoupper(trim((string)($parsed['nom']            ?? ''))),
+    'prenom'         => ucfirst(strtolower(trim((string)($parsed['prenom'] ?? '')))),
+    'poste'          => trim((string)($parsed['titre']          ?? '')),
+    'email'          => strtolower(trim((string)($parsed['email']          ?? ''))),
+    'telephone'      => trim((string)($parsed['telephone']      ?? '')),
     'competences'    => $competences,
-    'langues'        => trim($parsed['langues'] ?? ''),
-    'certifications' => trim($parsed['certifications'] ?? ''),
+    'langues'        => trim((string)($parsed['langues']        ?? '')),
+    'certifications' => trim((string)($parsed['certifications'] ?? '')),
     'diplomes'       => $diplomes,
-    'experiences'    => $experiences
+    'experiences'    => $experiences,
 ];
-
-$finalJson = json_encode($finalData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 
 // =====================
 // REDIRECTION
 // =====================
-$logo_type = $_POST['logo_type'] ?? 'invest';
-$texte_brut = substr($text, 0, 3000);
+$logo_type   = $_POST['logo_type'] ?? 'invest';
+$texte_brut  = substr($text, 0, 3000);
+
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
-$_SESSION['import_data'] = $finalData;
-$_SESSION['import_logo_type'] = $logo_type;
+
+$_SESSION['import_data']       = $finalData;
+$_SESSION['import_logo_type']  = $logo_type;
 $_SESSION['import_texte_brut'] = $texte_brut;
+
 header("Location: creationCV.php");
 exit();
