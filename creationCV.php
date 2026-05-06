@@ -10,6 +10,11 @@ if (!empty($_GET['data'])) {
     if (json_last_error() !== JSON_ERROR_NONE) {
         $data = [];
     }
+} elseif (!empty($_SESSION['import_data'])) {
+    $data = is_array($_SESSION['import_data']) ? $_SESSION['import_data'] : [];
+    $logo_type_get = $_SESSION['import_logo_type'] ?? $logo_type_get;
+    $texte_brut = $_SESSION['import_texte_brut'] ?? $texte_brut;
+    unset($_SESSION['import_data'], $_SESSION['import_logo_type'], $_SESSION['import_texte_brut']);
 }
 
 $nom_get = $data['nom'] ?? '';

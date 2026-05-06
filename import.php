@@ -371,7 +371,7 @@ if (!empty($parsed['experiences']) && is_array($parsed['experiences'])) {
 // =====================
 // CONSTRUCTION JSON FINAL
 // =====================
-$finalJson = json_encode([
+$finalData = [
     'nom'            => strtoupper(trim($parsed['nom'] ?? '')),
     'prenom'         => ucfirst(strtolower(trim($parsed['prenom'] ?? ''))),
     'poste'          => trim($parsed['titre'] ?? ''),
@@ -382,16 +382,20 @@ $finalJson = json_encode([
     'certifications' => trim($parsed['certifications'] ?? ''),
     'diplomes'       => $diplomes,
     'experiences'    => $experiences
-], JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
+];
+
+$finalJson = json_encode($finalData, JSON_UNESCAPED_UNICODE | JSON_PRETTY_PRINT);
 
 // =====================
 // REDIRECTION
 // =====================
 $logo_type = $_POST['logo_type'] ?? 'invest';
 $texte_brut = substr($text, 0, 3000);
-header(
-    "Location: creationCV.php?data=" . urlencode($finalJson)
-    . "&logo_type=" . urlencode($logo_type)
-    . "&texte_brut=" . urlencode($texte_brut)
-);
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+$_SESSION['import_data'] = $finalData;
+$_SESSION['import_logo_type'] = $logo_type;
+$_SESSION['import_texte_brut'] = $texte_brut;
+header("Location: creationCV.php");
 exit();
