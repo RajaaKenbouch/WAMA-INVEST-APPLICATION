@@ -33,7 +33,7 @@
     </div>
 </div>
 
-<!-- Features Bento Grid -->
+<!-- Features Bento Grid 
 <section class="py-section-padding mt-12">
     <div class="max-w-7xl mx-auto">
         <div class="text-center mb-12 space-y-4">
@@ -64,9 +64,9 @@
             </div>
         </div>
     </div>
-</section>
+</section>-->
 
-<!-- How it works -->
+<!-- How it works 
 <section class="py-section-padding">
     <div class="max-w-7xl mx-auto text-center">
         <h2 class="text-h2 font-h2 text-primary-container mb-12">Comment ça fonctionne ?</h2>
@@ -96,9 +96,9 @@
             </div>
         </div>
     </div>
-</section>
+</section>-->
 
-<!-- Bottom CTA -->
+<!-- Bottom CTA 
 <section class="py-16 bg-primary-container text-white rounded-2xl max-w-7xl mx-auto mt-12">
     <div class="text-center">
         <h2 class="text-3xl font-bold mb-4">Prêt à créer votre CV ?</h2>
@@ -108,6 +108,6 @@
             <a href="importationCV.php" class="bg-transparent border border-white/30 text-white px-8 py-3 rounded-xl hover:bg-white/10 transition-all">Importer un CV</a>
         </div>
     </div>
-</section>
+</section>-->
 
 <?php require_once 'inc/footer.php'; ?>

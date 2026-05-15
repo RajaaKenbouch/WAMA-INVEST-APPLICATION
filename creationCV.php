@@ -24,7 +24,18 @@ $email_get = $data['email'] ?? '';
 $telephone_get = $data['telephone'] ?? '';
 $competences_get = $data['competences'] ?? '';
 $langues_get = $data['langues'] ?? '';
-$certifications_get = is_array($data['certifications'] ?? null) ? implode(", ", $data['certifications']) : ($data['certifications'] ?? '');
+
+// Certifications : on s'assure que c'est un tableau
+$certifications_get = [];
+if (isset($data['certifications'])) {
+    if (is_array($data['certifications'])) {
+        $certifications_get = $data['certifications'];
+    } elseif (is_string($data['certifications'])) {
+        // Si chaîne, on transforme en tableau
+        $certifications_get = array_map('trim', explode("\n", $data['certifications']));
+    }
+}
+
 $diplomes_get = $data['diplomes'] ?? [];
 $experiences_get = $data['experiences'] ?? [];
 ?>
@@ -37,7 +48,7 @@ $experiences_get = $data['experiences'] ?? [];
             <p class="text-slate-300 text-sm mt-1">Remplissez le formulaire ci-dessous pour générer votre CV professionnel</p>
         </div>
         
-        <form action="generate_cv.php" method="POST" class="p-8 space-y-8">
+        <form action="generate_cv.php" method="POST" class="p-8 space-y-8" id="cvForm">
             <!-- Choix du logo -->
             <div>
                 <h2 class="text-lg font-bold text-primary-container mb-4 flex items-center gap-2">
@@ -99,7 +110,7 @@ $experiences_get = $data['experiences'] ?? [];
                 </div>
                 <button type="button" onclick="addDiplome()" class="mt-3 text-secondary hover:text-secondary/80 text-sm font-medium flex items-center gap-1 transition-colors">
                     <span class="material-symbols-outlined text-sm">add_circle</span>
-                    + Ajouter un diplôme
+                    Ajouter un diplôme
                 </button>
             </div>
 
@@ -136,7 +147,7 @@ $experiences_get = $data['experiences'] ?? [];
                 </div>
                 <button type="button" onclick="addExperience()" class="mt-3 text-secondary hover:text-secondary/80 text-sm font-medium flex items-center gap-1 transition-colors">
                     <span class="material-symbols-outlined text-sm">add_circle</span>
-                    + Ajouter une expérience
+                    Ajouter une expérience
                 </button>
             </div>
 
@@ -149,13 +160,37 @@ $experiences_get = $data['experiences'] ?? [];
                 <textarea name="langues" rows="3" placeholder="Ex: Arabe (maternelle), Français (courant), Anglais (technique)..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all"><?= htmlspecialchars($langues_get) ?></textarea>
             </div>
 
-            <!-- Certifications -->
+            <!-- Certifications - Version améliorée (dynamique) -->
             <div>
                 <h2 class="text-lg font-bold text-primary-container mb-4 flex items-center gap-2">
                     <span class="material-symbols-outlined">verified</span>
                     Certifications
                 </h2>
-                <textarea name="certifications" rows="3" placeholder="Ex: Certification AWS, Scrum Master..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all"><?= htmlspecialchars($certifications_get) ?></textarea>
+                <div id="certifications" class="space-y-3">
+                    <?php if (!empty($certifications_get) && is_array($certifications_get)): ?>
+                        <?php foreach ($certifications_get as $cert): ?>
+                            <?php if (trim($cert) != ''): ?>
+                            <div class="cert-item flex gap-3 p-4 bg-slate-50 rounded-xl">
+                                <input type="text" name="certifications[]" value="<?= htmlspecialchars(trim($cert)) ?>" placeholder="Certification (ex: AWS Certified)" class="flex-1 px-3 py-2 rounded-lg border border-slate-200">
+                                <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 transition-colors">
+                                    <span class="material-symbols-outlined">delete</span>
+                                </button>
+                            </div>
+                            <?php endif; ?>
+                        <?php endforeach; ?>
+                    <?php else: ?>
+                        <div class="cert-item flex gap-3 p-4 bg-slate-50 rounded-xl">
+                            <input type="text" name="certifications[]" placeholder="Certification (ex: AWS Certified)" class="flex-1 px-3 py-2 rounded-lg border border-slate-200">
+                            <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 transition-colors">
+                                <span class="material-symbols-outlined">delete</span>
+                            </button>
+                        </div>
+                    <?php endif; ?>
+                </div>
+                <button type="button" onclick="addCertification()" class="mt-3 text-secondary hover:text-secondary/80 text-sm font-medium flex items-center gap-1 transition-colors">
+                    <span class="material-symbols-outlined text-sm">add_circle</span>
+                    Ajouter une certification
+                </button>
             </div>
 
             <!-- Texte brut (si import) -->
@@ -170,10 +205,16 @@ $experiences_get = $data['experiences'] ?? [];
             </div>
             <?php endif; ?>
 
-            <!-- Bouton de soumission -->
+            <!-- Bouton de soumission avec spinner -->
             <div class="text-center pt-4">
-                <button type="submit" class="bg-primary-container text-white px-8 py-3 rounded-xl font-button text-button shadow-lg hover:shadow-xl transition-all active:scale-95">
-                    🚀 Générer mon CV
+                <button type="submit" id="submitBtn" class="bg-primary-container text-white px-8 py-3 rounded-xl font-button text-button shadow-lg hover:shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 w-full md:w-auto mx-auto">
+                    <span class="btn-text">🚀 Générer mon CV</span>
+                    <span class="btn-spinner hidden">
+                        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                        </svg>
+                    </span>
                 </button>
             </div>
         </form>
@@ -206,6 +247,39 @@ function addExperience() {
     `;
     document.getElementById('experiences').appendChild(div);
 }
+
+function addCertification() {
+    const div = document.createElement('div');
+    div.className = 'cert-item flex gap-3 p-4 bg-slate-50 rounded-xl';
+    div.innerHTML = `
+        <input type="text" name="certifications[]" placeholder="Certification (ex: AWS Certified)" class="flex-1 px-3 py-2 rounded-lg border border-slate-200">
+        <button type="button" onclick="this.parentElement.remove()" class="text-red-500 hover:text-red-700 transition-colors">
+            <span class="material-symbols-outlined">delete</span>
+        </button>
+    `;
+    document.getElementById('certifications').appendChild(div);
+}
+
+// Gestion du spinner au submit
+document.getElementById('cvForm').addEventListener('submit', function(e) {
+    const btn = document.getElementById('submitBtn');
+    const btnText = btn.querySelector('.btn-text');
+    const btnSpinner = btn.querySelector('.btn-spinner');
+    
+    btn.disabled = true;
+    btn.classList.add('opacity-70', 'cursor-not-allowed');
+    btnText.textContent = 'Génération en cours...';
+    btnSpinner.classList.remove('hidden');
+});
 </script>
+
+<style>
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+.animate-spin {
+    animation: spin 0.8s linear infinite;
+}
+</style>
 
 <?php require_once 'inc/footer.php'; ?>

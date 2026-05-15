@@ -99,6 +99,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <style>
         body { font-family: 'Inter', sans-serif; background-color: #fbf9fb; }
         .material-symbols-outlined { font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; }
+        .error-space {
+            min-height: 40px; /* Réserve la place pour l'erreur */
+        }
+        .error-message {
+            color: #dc3545;
+            font-size: 12px;
+            margin-top: 4px;
+            visibility: visible;
+        }
+        .error-message.hidden {
+            visibility: hidden;
+            margin: 0;
+        }
     </style>
 </head>
 <body class="bg-surface text-on-surface min-h-screen flex items-center justify-center">
@@ -122,28 +135,36 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                 </div>
             <?php endif; ?>
             
-            <form method="POST" class="space-y-5">
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">Nom d'utilisateur</label>
-                    <div class="relative">
-                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">person</span>
-                        <input type="text" name="username" placeholder="admin" required autofocus class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all">
-                    </div>
-                </div>
-                
-                <div>
-                    <label class="block text-sm font-medium text-slate-700 mb-2">Mot de passe</label>
-                    <div class="relative">
-                        <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">lock</span>
-                        <input type="password" name="password" placeholder="••••••••" required class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all">
-                    </div>
-                </div>
-                
-                <button type="submit" class="w-full bg-primary-container text-white py-3 rounded-xl font-button shadow-lg hover:shadow-xl transition-all active:scale-95 mt-6">
-                    Se connecter
-                </button>
-            </form>
-            
+        <form method="POST" id="loginForm" autocomplete="off">
+            <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">Nom d'utilisateur</label>
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">person</span>
+                <input type="text" name="username" id="username" placeholder="admin" autocomplete="off" autofocus class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all">
+            </div>
+            <div class="error-space">
+                <p id="usernameError" class="error-message hidden">Nom d'utilisateur requis</p>
+            </div>
+        </div>
+
+        <div>
+            <label class="block text-sm font-medium text-slate-700 mb-2">Mot de passe</label>
+            <div class="relative">
+                <span class="material-symbols-outlined absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 text-xl">lock</span>
+                <input type="password" name="password" id="password" placeholder="••••••••" autocomplete="off" class="w-full pl-10 pr-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all">
+            </div>
+            <div class="error-space">
+                <p id="passwordError" class="error-message hidden">Mot de passe requis</p>
+            </div>
+        </div>
+
+        <button type="submit" id="submitBtn" class="w-full bg-primary-container text-white py-3 rounded-xl font-button shadow-lg hover:shadow-xl transition-all active:scale-95">
+            Se connecter
+        </button>
+        </form>
+            <div class="mt-4 text-center">
+                <a href="forget_password.php" class="text-sm text-secondary hover:underline">Mot de passe oublié ?</a>
+            </div>
             <div class="mt-6 text-center text-xs text-slate-400">
                 <p>Application interne WAMA INVEST</p>
                 <p class="mt-1">© 2026 - Tous droits réservés</p>
@@ -151,6 +172,51 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         </div>
     </div>
 </div>
+<script>
+    const usernameInput = document.getElementById('username');
+    const passwordInput = document.getElementById('password');
+    const submitBtn = document.getElementById('submitBtn');
+    const usernameError = document.getElementById('usernameError');
+    const passwordError = document.getElementById('passwordError');
 
+    function validateForm() {
+        let isValid = true;
+        
+        // Validation du nom d'utilisateur
+        if (usernameInput.value.trim() === '') {
+            usernameError.classList.remove('hidden');
+            usernameInput.classList.add('border-red-500');
+            isValid = false;
+        } else {
+            usernameError.classList.add('hidden');
+            usernameInput.classList.remove('border-red-500');
+        }
+        
+        // Validation du mot de passe
+        if (passwordInput.value.trim() === '') {
+            passwordError.classList.remove('hidden');
+            passwordInput.classList.add('border-red-500');
+            isValid = false;
+        } else {
+            passwordError.classList.add('hidden');
+            passwordInput.classList.remove('border-red-500');
+        }
+        
+        // Activer/désactiver le bouton
+        submitBtn.disabled = !isValid;
+        if (!isValid) {
+            submitBtn.classList.add('opacity-50', 'cursor-not-allowed');
+        } else {
+            submitBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+        }
+    }
+    
+    // Événements pour valider en temps réel
+    usernameInput.addEventListener('input', validateForm);
+    passwordInput.addEventListener('input', validateForm);
+    
+    // Validation initiale
+    validateForm();
+</script>
 </body>
 </html>

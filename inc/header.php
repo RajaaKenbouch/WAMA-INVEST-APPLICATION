@@ -10,6 +10,9 @@ session_start();
     <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
     <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet">
+    <link rel="stylesheet" type="text/css" href="https://cdn.jsdelivr.net/npm/toastify-js/src/toastify.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/toastify-js"></script>
+    
     <script>
         tailwind.config = {
             darkMode: "class",
@@ -110,11 +113,21 @@ session_start();
             </a>
         </div>
         <div class="hidden md:flex items-center gap-8">
-            <a href="home.php" class="text-[#0B1F3A] font-sans text-sm font-semibold tracking-tight">Accueil</a>
-            <a href="creationCV.php" class="text-slate-400 hover:bg-slate-50 text-sm font-semibold tracking-tight p-2 rounded-lg transition-all">Créer un CV</a>
-            <a href="importationCV.php" class="text-slate-400 hover:bg-slate-50 text-sm font-semibold tracking-tight p-2 rounded-lg transition-all">Importer un CV</a>
-            <a href="liste_cv.php" class="text-slate-400 hover:bg-slate-50 text-sm font-semibold tracking-tight p-2 rounded-lg transition-all">CV stockés</a>
-        </div>
+            <nav class="hidden md:flex items-center gap-8">
+                    <a href="home.php" class="text-sm font-semibold tracking-tight transition-all <?= basename($_SERVER['PHP_SELF']) == 'home.php' ? 'text-[#0B1F3A] border-b-2 border-[#0B1F3A]' : 'text-slate-400 hover:text-[#0B1F3A]' ?>">
+                        Accueil
+                    </a>
+                    <a href="creationCV.php" class="text-sm font-semibold tracking-tight transition-all <?= basename($_SERVER['PHP_SELF']) == 'creationCV.php' ? 'text-[#0B1F3A] border-b-2 border-[#0B1F3A]' : 'text-slate-400 hover:text-[#0B1F3A]' ?>">
+                        Créer un CV
+                    </a>
+                    <a href="importationCV.php" class="text-sm font-semibold tracking-tight transition-all <?= basename($_SERVER['PHP_SELF']) == 'importationCV.php' ? 'text-[#0B1F3A] border-b-2 border-[#0B1F3A]' : 'text-slate-400 hover:text-[#0B1F3A]' ?>">
+                        Importer un CV
+                    </a>
+                    <a href="liste_cv.php" class="text-sm font-semibold tracking-tight transition-all <?= basename($_SERVER['PHP_SELF']) == 'liste_cv.php' ? 'text-[#0B1F3A] border-b-2 border-[#0B1F3A]' : 'text-slate-400 hover:text-[#0B1F3A]' ?>">
+                        CV stockés
+                    </a>
+                </nav
+             </div>
         <div class="flex items-center gap-4">
             <?php if (isset($_SESSION['user_id'])): ?>
                 <span class="text-sm text-slate-600 hidden md:block">👋 <?= htmlspecialchars($_SESSION['username']) ?></span>
@@ -125,6 +138,13 @@ session_start();
         </div>
     </div>
 </nav>
+
+
+<!-- <a href="home.php" class="text-[#0B1F3A] font-sans text-sm font-semibold tracking-tight">Accueil</a>
+            <a href="creationCV.php" class="text-slate-400 hover:bg-slate-50 text-sm font-semibold tracking-tight p-2 rounded-lg transition-all">Créer un CV</a>
+            <a href="importationCV.php" class="text-slate-400 hover:bg-slate-50 text-sm font-semibold tracking-tight p-2 rounded-lg transition-all">Importer un CV</a>
+            <a href="liste_cv.php" class="text-slate-400 hover:bg-slate-50 text-sm font-semibold tracking-tight p-2 rounded-lg transition-all">CV stockés</a>
+       -->
 
 <!-- Main content container avec padding top pour la navbar fixe -->
 <main class="pt-24 pb-12 px-6 min-h-screen">

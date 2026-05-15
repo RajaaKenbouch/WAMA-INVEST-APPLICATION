@@ -50,7 +50,7 @@ $stmtPostes = $pdo->query("SELECT DISTINCT poste FROM cv WHERE poste IS NOT NULL
 $postes = $stmtPostes->fetchAll(PDO::FETCH_COLUMN);
 ?>
 <?php require_once 'inc/header.php'; ?>
-
+<link rel="stylesheet" href="style1.css">
 <div class="max-w-7xl mx-auto">
     <div class="bg-white rounded-2xl shadow-lg overflow-hidden">
         <div class="bg-primary-container px-8 py-6">
@@ -76,7 +76,7 @@ $postes = $stmtPostes->fetchAll(PDO::FETCH_COLUMN);
 
             <?php if (count($cvs) === 0): ?>
                 <div class="text-center py-12">
-                    <span class="material-symbols-outlined text-6xl text-slate-300">folder_empty</span>
+                    <span class="material-symbols-outlined text-6xl text-slate-300">folder_VIDE</span>
                     <p class="text-slate-500 mt-4">Aucun CV trouvé</p>
                 </div>
             <?php else: ?>
@@ -105,8 +105,19 @@ $postes = $stmtPostes->fetchAll(PDO::FETCH_COLUMN);
                                 <td class="px-4 py-3"><?= htmlspecialchars($cv['email'] ?: '-') ?></td>
                                 <td class="px-4 py-3"><?= date('d/m/Y H:i', strtotime($cv['date_creation'])) ?></td>
                                 <td class="px-4 py-3 text-center">
-                                    <a href="download_cv_by_id.php?id=<?= $cv['id'] ?>" class="inline-block bg-green-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-green-700 transition-colors">📥 PDF</a>
-                                    <a href="delete_cv.php?id=<?= $cv['id'] ?>" class="inline-block bg-red-600 text-white px-3 py-1 rounded-lg text-sm hover:bg-red-700 transition-colors ml-2" onclick="return confirm('Supprimer ce CV ?')">🗑️</a>
+                                    <div class="dropdown">
+                                        <button class="dropdown-btn">
+                                            <span class="dots">•••</span>
+                                        </button>
+                                        <div class="dropdown-content">
+                                            <a href="download_cv_by_id.php?id=<?= $cv['id'] ?>" class="dropdown-item">
+                                                <span class="icon">📥</span> Télécharger
+                                            </a>
+                                            <a href="delete_cv.php?id=<?= $cv['id'] ?>" class="dropdown-item delete" onclick="return confirm('Supprimer définitivement ce CV ?')">
+                                                <span class="icon">🗑️</span> Supprimer
+                                            </a>
+                                        </div>
+                                    </div>
                                 </td>
                             </tr>
                             <?php endforeach; ?>

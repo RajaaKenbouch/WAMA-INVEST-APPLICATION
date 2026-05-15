@@ -1,0 +1,86 @@
+   /* Dropdown moderne */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-btn {
+    background: #f1f5f9;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 6px 10px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+}
+
+.dropdown-btn:hover {
+    background: #e2e8f0;
+    border-color: #cbd5e1;
+}
+
+.dots {
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 2px;
+    color: #475569;
+}
+
+/* Menu déroulant */
+.dropdown-content {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 110%;
+    background: white;
+    min-width: 160px;
+    box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.02);
+    border-radius: 12px;
+    z-index: 10;
+    overflow: hidden;
+    border: 1px solid #e2e8f0;
+}
+
+.dropdown-content a {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    text-decoration: none;
+    font-size: 13px;
+    font-weight: 500;
+    color: #1e293b;
+    transition: all 0.2s ease;
+}
+
+.dropdown-content a .icon {
+    font-size: 16px;
+    width: 20px;
+}
+
+.dropdown-content a:hover {
+    background: #f8fafc;
+}
+
+.dropdown-content a.delete:hover {
+    color: #dc2626;
+}
+
+.dropdown:hover .dropdown-content {
+    display: block;
+}
+
+/* Animation d'entrée */
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(-8px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.dropdown-content {
+    animation: fadeIn 0.2s ease;
+}

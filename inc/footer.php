@@ -24,7 +24,7 @@
                 <h4 class="font-bold text-xs mb-4 uppercase tracking-widest text-slate-400">Support</h4>
                 <ul class="space-y-2 text-sm text-on-surface-variant">
                     <li><a href="https://www.wama-invest.com/" target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors">Aide</a></li>
-                    <li><a href="https://www.wama-invest.com/" target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors">Contact</a></li>
+                    <li><a href="https://wama-invest.com/contactez-nous/" target="_blank" rel="noopener noreferrer" class="hover:text-primary transition-colors">Contact</a></li>
                 </ul>
             </div>
         </div>
@@ -38,20 +38,22 @@
 </footer>
 
 <!-- Bottom Navigation Bar (Mobile Only) -->
-<nav class="md:hidden fixed bottom-0 left-0 w-full flex justify-around items-center h-14 bg-white border-t border-slate-100 shadow-[0_-4px_12px_rgba(11,31,58,0.04)] z-50">
-    <a href="home.php" class="flex flex-col items-center justify-center text-[#0B1F3A] pt-2 pb-2 px-4">
+<nav class="md:hidden fixed bottom-0 left-0 w-full flex justify-around items-center h-14 bg-white border-t border-slate-100 z-50">
+    <?php $current = basename($_SERVER['PHP_SELF']); ?>
+    
+    <a href="home.php" class="flex flex-col items-center justify-center pt-2 pb-2 px-4 transition-all <?= $current == 'home.php' ? 'text-[#0B1F3A] border-t-2 border-[#0B1F3A]' : 'text-slate-400' ?>">
         <span class="material-symbols-outlined text-xl">home</span>
         <span class="text-[9px] font-bold uppercase tracking-widest">Accueil</span>
     </a>
-    <a href="creationCV.php" class="flex flex-col items-center justify-center text-slate-400 pt-2 pb-2 px-4">
+    <a href="creationCV.php" class="flex flex-col items-center justify-center pt-2 pb-2 px-4 transition-all <?= $current == 'creationCV.php' ? 'text-[#0B1F3A] border-t-2 border-[#0B1F3A]' : 'text-slate-400' ?>">
         <span class="material-symbols-outlined text-xl">add_circle</span>
         <span class="text-[9px] font-bold uppercase tracking-widest">Créer</span>
     </a>
-    <a href="importationCV.php" class="flex flex-col items-center justify-center text-slate-400 pt-2 pb-2 px-4">
+    <a href="importationCV.php" class="flex flex-col items-center justify-center pt-2 pb-2 px-4 transition-all <?= $current == 'importationCV.php' ? 'text-[#0B1F3A] border-t-2 border-[#0B1F3A]' : 'text-slate-400' ?>">
         <span class="material-symbols-outlined text-xl">upload_file</span>
         <span class="text-[9px] font-bold uppercase tracking-widest">Importer</span>
     </a>
-    <a href="liste_cv.php" class="flex flex-col items-center justify-center text-slate-400 pt-2 pb-2 px-4">
+    <a href="liste_cv.php" class="flex flex-col items-center justify-center pt-2 pb-2 px-4 transition-all <?= $current == 'liste_cv.php' ? 'text-[#0B1F3A] border-t-2 border-[#0B1F3A]' : 'text-slate-400' ?>">
         <span class="material-symbols-outlined text-xl">folder_copy</span>
         <span class="text-[9px] font-bold uppercase tracking-widest">CV</span>
     </a>

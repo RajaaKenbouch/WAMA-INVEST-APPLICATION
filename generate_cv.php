@@ -6,7 +6,14 @@ $email = $_POST['email'] ?? '';
 $telephone = $_POST['telephone'] ?? '';
 
 $competences = nl2br($_POST['competences'] ?? '');
-$certifications = nl2br($_POST['certifications'] ?? '');
+$certifications_raw = $_POST['certifications'] ?? '';
+if (is_array($certifications_raw)) {
+    $certifications_list = $certifications_raw;
+    $certifications = implode("\n", $certifications_list);
+} else {
+    $certifications = nl2br($certifications_raw);
+    $certifications_list = array_filter(array_map('trim', explode("\n", $certifications_raw)), fn($c) => !empty($c));
+}
 $langues = nl2br($_POST['langues'] ?? '');
 
 
@@ -17,7 +24,7 @@ if (!empty($_POST['diplome_date']) && !empty($_POST['diplome_titre']) && !empty(
         $titre = htmlspecialchars($_POST['diplome_titre'][$i]);
         $ecole = htmlspecialchars($_POST['diplome_ecole'][$i]);
         if (!empty($date) || !empty($titre) || !empty($ecole)) {
-            $diplome_html .= "<p><strong>$date</strong> - $titre<br><em>$ecole</em></p>";
+            $diplome_html .= "<p>• <strong>$date</strong> - $titre<br><em>$ecole</em></p>";
         }
     }
 }
@@ -35,9 +42,9 @@ if (!empty($_POST['exp_date']) && !empty($_POST['exp_poste']) && !empty($_POST['
         if (!empty($date) || !empty($poste_exp) || !empty($entreprise)) {
             $experience_html .= "
             <div style='margin-bottom: 15px;'>
-                <p><strong>$date</strong> : <strong>$poste_exp</strong> - $entreprise</p>
+                <p>• <strong>$date</strong> : <strong>$poste_exp</strong> - $entreprise</p>
                 <p>$description</p>
-                <p><em>Outils : $outils</em></p>
+                <p><em><strong>Outils</strong> : $outils</em></p>
             </div>
             ";
         }
@@ -77,83 +84,7 @@ $stmt->execute([
 <head>
     <meta charset="UTF-8">
     <title>Aperçu CV WAMA</title>
-    <style>
-        body {
-            background: #eef2f5;
-            font-family: 'Segoe UI', Arial, sans-serif;
-            padding: 40px;
-            display: flex;
-            justify-content: center;
-        }
-        .cv {
-            width: 900px;
-            background: white;
-            padding: 35px;
-            box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-            border-radius: 8px;
-        }
-        .header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding-bottom: 15px;
-            margin-bottom: 20px;
-        }
-        .logo {
-            width: 100px;
-        }
-        .contact-info {
-            text-align: right;
-            font-size: 12px;
-            line-height: 1.4;
-        }
-        h1 {
-            color:#365F91;
-            text-align: center;
-            font-size: 26px;
-            margin: 15px 0 5px;
-        }
-        .sous-titre {
-            text-align: center;
-            font-size: 14px;
-            color: #1a73e8;
-            margin-bottom: 5px;
-        }
-        .contact {
-            text-align: center;
-            font-size: 12px;
-            margin-bottom: 25px;
-        }
-        h2 {
-            font-size: 16px;
-            padding-bottom: 5px;
-            margin-top: 25px;
-            text-transform: uppercase;
-            color: #90E0EF;
-            background-color:#365F91;
-        }
-        .section {
-            margin: 15px 0;
-        }
-        button {
-            background: #1a73e8;
-            color: white;
-            padding: 12px 28px;
-            border: none;
-            border-radius: 30px;
-            cursor: pointer;
-            font-size: 16px;
-            display: block;
-            margin: 30px auto 10px;
-            transition: 0.3s;
-        }
-        button:hover {
-            background: #0e5bbf;
-        }
-        ul, li {
-            margin-left: 20px;
-        }
-    </style>
+    <link rel="stylesheet" href="style.css">
 </head>
 <body>
 <div>
@@ -169,9 +100,8 @@ $stmt->execute([
 
         <h1><?= htmlspecialchars(strtoupper($nom)) ?> <?= htmlspecialchars(ucfirst($prenom)) ?></h1>
         <div class="sous-titre"><?= htmlspecialchars($poste) ?></div>
-        <div class="contact"><?= htmlspecialchars($email) ?> | <?= htmlspecialchars($telephone) ?></div>
 
-        <div class="section">
+        <div>
             <h2>COMPÉTENCES PROFESSIONNELLES</h2>
             <?php
 
@@ -231,9 +161,11 @@ $stmt->execute([
         <input type="hidden" name="email" value="<?= htmlspecialchars($email) ?>">
         <input type="hidden" name="telephone" value="<?= htmlspecialchars($telephone) ?>">
         <input type="hidden" name="competences" value="<?= htmlspecialchars($_POST['competences'] ?? '') ?>">
-        <input type="hidden" name="certifications" value="<?= htmlspecialchars($_POST['certifications'] ?? '') ?>">
+        <input type="hidden" name="certifications" value="<?= htmlspecialchars($certifications) ?>">
         <input type="hidden" name="diplome_html" value="<?= htmlspecialchars($diplome_html) ?>">
         <input type="hidden" name="experience_html" value="<?= htmlspecialchars($experience_html) ?>">
+        <input type="hidden" name="langues" value="<?= htmlspecialchars($langues) ?>">
+        <input type="hidden" name="logo_type" value="<?= htmlspecialchars($logo_type) ?>">
 
         <button type="submit">📥 Télécharger mon CV (PDF)</button>
     </form>

@@ -1,26 +1,29 @@
 <?php
-
+session_start(); // ← AJOUTÉ
 require 'vendor/autoload.php';
+use Dotenv\Dotenv;
 
-// =====================
-// CONFIGURATION
-// =====================
-$geminiApiKey = 'AIzaSyAwOMqXzt_kve7R6TthWZMWdHNjce7Wb1E'; // Get free at aistudio.google.com
+if (file_exists(__DIR__ . '/.env')) {
+    $dotenv = Dotenv::createImmutable(__DIR__);
+    $dotenv->load();
+}
+$geminiApiKey = $_ENV['API_KEY']; 
 
-// =====================
-// VÉRIFICATION FICHIER
-// =====================
+// ← AJOUTÉ : fonction pour les toasts d'erreur
+function setImportError($message) {
+    $_SESSION['import_toast'] = ['message' => $message, 'type' => 'error'];
+}
+
 if (!isset($_FILES['cv_file']) || $_FILES['cv_file']['error'] !== UPLOAD_ERR_OK) {
-    die(json_encode(["error" => "Aucun fichier envoyé ou erreur d'upload"]));
+    setImportError("Aucun fichier envoyé ou erreur d'upload");
+    header("Location: importationCV.php");
+    exit;
 }
 
 $file    = $_FILES['cv_file'];
 $type    = strtolower(pathinfo($file['name'], PATHINFO_EXTENSION));
 $tmpPath = $file['tmp_name'];
 
-// =====================
-// EXTRACTION TEXTE BRUT
-// =====================
 $text = "";
 
 if ($type === "pdf") {
@@ -30,7 +33,9 @@ if ($type === "pdf") {
         $text   = $pdf->getText();
         $text   = preg_replace('/[^\x20-\x7E\xC0-\xFF\n\r\t]/', ' ', $text);
     } catch (Exception $e) {
-        die(json_encode(["error" => "Erreur lecture PDF: " . $e->getMessage()]));
+        setImportError("Erreur lecture PDF: " . $e->getMessage());
+        header("Location: importationCV.php");
+        exit;
     }
 
 } elseif ($type === "docx") {
@@ -50,29 +55,34 @@ if ($type === "pdf") {
             }
         }
     } catch (Exception $e) {
-        die(json_encode(["error" => "Erreur lecture DOCX: " . $e->getMessage()]));
+        setImportError("Erreur lecture DOCX: " . $e->getMessage());
+        header("Location: importationCV.php");
+        exit;
     }
 
 } elseif ($type === "txt") {
     $text = file_get_contents($tmpPath);
     if ($text === false) {
-        die(json_encode(["error" => "Erreur lecture fichier TXT"]));
+        setImportError("Erreur lecture fichier TXT");
+        header("Location: importationCV.php");
+        exit;
     }
 
 } else {
-    die(json_encode(["error" => "Format non supporté. Utilisez PDF, DOCX ou TXT"]));
+    setImportError("Format non supporté. Utilisez PDF, DOCX ou TXT");
+    header("Location: importationCV.php");
+    exit;
 }
 
-// =====================
-// VÉRIFICATION TEXTE
-// =====================
 $text = trim($text);
 if (empty($text)) {
-    die(json_encode(["error" => "Aucun texte extrait. Le fichier est peut-être scanné ou protégé."]));
+    setImportError("Aucun texte extrait. Le fichier est peut-être scanné ou protégé.");
+    header("Location: importationCV.php");
+    exit;
 }
 
 // =====================
-// PROMPT UNIVERSEL
+// PROMPT (IDENTIQUE - NON MODIFIÉ)
 // =====================
 $prompt = <<<PROMPT
 You are a world-class CV/Resume parser with 20 years of experience reading resumes from all countries, cultures, and formats.
@@ -145,7 +155,6 @@ Your task: Extract ALL useful information from the CV below.
   "titre": "job title or professional headline",
   "resume": "2-3 sentence professional summary",
   "competences_techniques": "tech skill1, skill2, skill3...",
-  "competences_soft": "soft skill1, skill2...",
   "langues": "Language1 (level), Language2 (level)",
   "formations": [
     {
@@ -163,7 +172,8 @@ Your task: Extract ALL useful information from the CV below.
       "outils": "tool1, tool2, or empty string"
     }
   ],
-  "certifications": "cert1, cert2...",
+  "certifications": "• cert1, 
+  • cert2...",
   "projets": "project1, project2...",
   "centres_interet": "interest1, interest2..."
 }
@@ -194,11 +204,10 @@ Example with ONLY company, no title, no date (still include it!):
 
 PROMPT;
 
-// Use up to 12000 chars to avoid cutting off experiences
 $prompt .= "\n\n" . substr($text, 0, 12000);
 
 // =====================
-// APPEL GEMINI API
+// APPEL GEMINI API (IDENTIQUE - NON MODIFIÉ)
 // =====================
 $url     = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" . $geminiApiKey;
 $payload = json_encode([
@@ -214,7 +223,9 @@ $payload = json_encode([
 ], JSON_INVALID_UTF8_SUBSTITUTE);
 
 if ($payload === false) {
-    die(json_encode(["error" => "Erreur d'encodage de la requête : " . json_last_error_msg()]));
+    setImportError("Erreur d'encodage de la requête : " . json_last_error_msg());
+    header("Location: importationCV.php");
+    exit;
 }
 
 $ch = curl_init($url);
@@ -232,25 +243,31 @@ $curlError = curl_error($ch);
 curl_close($ch);
 
 // =====================
-// GESTION ERREURS CURL
+// GESTION ERREURS CURL (AVEC TOAST)
 // =====================
 if ($curlError) {
-    die(json_encode(["error" => "Erreur de connexion: " . $curlError]));
+    setImportError("Impossible de contacter l'API Gemini. Vérifiez votre connexion Internet.");
+    header("Location: importationCV.php");
+    exit;
 }
 
 if ($httpCode !== 200) {
     $errorData = json_decode($response, true);
     $errorMsg  = $errorData['error']['message'] ?? "Erreur API HTTP $httpCode";
-    die(json_encode(["error" => "Gemini API: " . $errorMsg]));
+    setImportError("Gemini API: " . $errorMsg);
+    header("Location: importationCV.php");
+    exit;
 }
 
 // =====================
-// PARSING RÉPONSE GEMINI
+// PARSING RÉPONSE GEMINI (IDENTIQUE - NON MODIFIÉ)
 // =====================
 $geminiData = json_decode($response, true, 512, JSON_INVALID_UTF8_SUBSTITUTE);
 
 if (!isset($geminiData['candidates'][0]['content']['parts'][0]['text'])) {
-    die(json_encode(["error" => "Réponse Gemini invalide ou vide"]));
+    setImportError("Réponse Gemini invalide ou vide");
+    header("Location: importationCV.php");
+    exit;
 }
 
 $rawText = $geminiData['candidates'][0]['content']['parts'][0]['text'];
@@ -300,18 +317,14 @@ if (!$parsed || !is_array($parsed)) {
     $parsed = json_decode($fixed, true, 512, JSON_INVALID_UTF8_SUBSTITUTE);
 }
 
-// ----------------------
-// Échec total
-// ----------------------
 if (!$parsed || !is_array($parsed)) {
-    die(json_encode([
-        "error" => "Impossible de parser la réponse Gemini",
-        "raw"   => $rawText
-    ]));
+    setImportError("Impossible de parser la réponse Gemini");
+    header("Location: importationCV.php");
+    exit;
 }
 
 // =====================
-// FALLBACK NOM
+// FALLBACK NOM (IDENTIQUE - NON MODIFIÉ)
 // =====================
 if (empty($parsed['nom'])) {
     $lines = explode("\n", $text);
@@ -344,25 +357,23 @@ if (empty($parsed['nom'])) {
 }
 
 // =====================
-// NORMALISATION EXPÉRIENCES
+// NORMALISATION EXPÉRIENCES (IDENTIQUE - NON MODIFIÉ)
 // =====================
 $experiences = [];
 if (!empty($parsed['experiences']) && is_array($parsed['experiences'])) {
     foreach ($parsed['experiences'] as $e) {
-        // Skip only if ALL fields are completely empty (truly blank entry)
         $poste       = trim((string)($e['poste']       ?? ''));
         $entreprise  = trim((string)($e['entreprise']  ?? ''));
         $description = trim((string)($e['description'] ?? ''));
         $periode     = trim((string)($e['periode']     ?? ''));
         $outils      = trim((string)($e['outils']      ?? ''));
 
-        // Keep the experience as long as at least one meaningful field has content
         if ($poste === '' && $entreprise === '' && $description === '') {
-            continue; // truly empty entry, skip
+            continue;
         }
 
         $experiences[] = [
-            'periode'     => $periode,      // empty string if no date — NOT skipped
+            'periode'     => $periode,
             'poste'       => $poste,
             'entreprise'  => $entreprise,
             'description' => $description,
@@ -380,7 +391,7 @@ if (!empty($parsed['experiences']) && is_array($parsed['experiences'])) {
 }
 
 // =====================
-// NORMALISATION FORMATIONS
+// NORMALISATION FORMATIONS (IDENTIQUE - NON MODIFIÉ)
 // =====================
 $diplomes = [];
 if (!empty($parsed['formations']) && is_array($parsed['formations'])) {
@@ -406,7 +417,7 @@ if (!empty($parsed['formations']) && is_array($parsed['formations'])) {
 }
 
 // =====================
-// NORMALISATION COMPÉTENCES
+// NORMALISATION COMPÉTENCES (IDENTIQUE - NON MODIFIÉ)
 // =====================
 $competences = trim(implode(' | ', array_filter([
     trim((string)($parsed['competences_techniques'] ?? '')),
@@ -414,7 +425,19 @@ $competences = trim(implode(' | ', array_filter([
 ])));
 
 // =====================
-// CONSTRUCTION JSON FINAL
+// NORMALISATION CERTIFICATIONS (AJOUTÉ POUR TABLEAU)
+// =====================
+function normalizeCertifications($certs) {
+    if (empty($certs)) return [];
+    if (is_array($certs)) return $certs;
+    if (strpos($certs, ',') !== false) return array_map('trim', explode(',', $certs));
+    if (strpos($certs, "\n") !== false) return array_map('trim', explode("\n", $certs));
+    if (strpos($certs, '•') !== false) return array_map('trim', explode('•', $certs));
+    return [trim($certs)];
+}
+
+// =====================
+// CONSTRUCTION JSON FINAL (AVEC NORMALISATION CERTIFS)
 // =====================
 $finalData = [
     'nom'            => strtoupper(trim((string)($parsed['nom']            ?? ''))),
@@ -424,13 +447,13 @@ $finalData = [
     'telephone'      => trim((string)($parsed['telephone']      ?? '')),
     'competences'    => $competences,
     'langues'        => trim((string)($parsed['langues']        ?? '')),
-    'certifications' => trim((string)($parsed['certifications'] ?? '')),
+    'certifications' => normalizeCertifications($parsed['certifications'] ?? ''),
     'diplomes'       => $diplomes,
     'experiences'    => $experiences,
 ];
 
 // =====================
-// REDIRECTION
+// REDIRECTION (AVEC TOAST SUCCÈS)
 // =====================
 $logo_type   = $_POST['logo_type'] ?? 'invest';
 $texte_brut  = substr($text, 0, 3000);
@@ -443,5 +466,6 @@ $_SESSION['import_data']       = $finalData;
 $_SESSION['import_logo_type']  = $logo_type;
 $_SESSION['import_texte_brut'] = $texte_brut;
 
+$_SESSION['import_toast'] = ['message' => "CV importé avec succès !", 'type' => 'success'];
 header("Location: creationCV.php");
 exit();

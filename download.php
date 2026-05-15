@@ -58,18 +58,15 @@ if (!empty($certifications)) {
 $html = "
 <style>
         body {
-            background: #eef2f5;
             font-family: 'Segoe UI', Arial, sans-serif;
-            padding: 40px;
-            display: flex;
-            justify-content: center;
+          
+        
         }
         .cv {
-            width: 900px;
+            
             background: white;
-            padding: 35px;
             box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-            border-radius: 8px;
+            
         }
         .header {
             display: flex;
