@@ -133,7 +133,24 @@ Your task: Extract ALL useful information from the CV below.
    - An experience with no date is still a valid experience — include it
    - Do not use "N/A", "Unknown", or any placeholder — just use ""
 
-8. OUTPUT FORMAT:
+8. CALCULATE TOTAL YEARS AND MONTHS OF EXPERIENCE (CRITICAL):
+   - Calculate the TOTAL cumulative experience from ALL entries in the "experiences" array
+   - For EACH experience with a valid period (e.g., "Jan 2022 - Dec 2023"), calculate its duration in years and months
+   - SUM all durations together to get the TOTAL professional experience
+   - If an experience has no date or empty periode → ignore it (contribute 0)
+   - Return the TOTAL as a HUMAN-READABLE STRING in French:
+     * If exactly X years (0 months) → "X ans"
+     * If exactly X years and Y months → "X ans et Y mois"
+     * If less than 1 year → "Y mois"
+     * If 0 → "0 an"
+   - Examples:
+     * Experience 1: 2 years, Experience 2: 1 year → TOTAL = "3 ans"
+     * Experience 1: 2 years 6 months, Experience 2: 1 year 3 months → TOTAL = "3 ans et 9 mois"
+     * Experience 1: 8 months, Experience 2: 7 months → TOTAL = "1 an et 3 mois"
+   - Always use French spelling: "an" for 1, "ans" for >1
+   - Do NOT use decimals (no "2.5")
+
+9. OUTPUT FORMAT:
    - Return ONLY a valid JSON object
    - No markdown, no backticks, no explanation
    - No text before or after the JSON
@@ -154,6 +171,7 @@ Your task: Extract ALL useful information from the CV below.
   "portfolio": "website or portfolio URL",
   "titre": "job title or professional headline",
   "resume": "2-3 sentence professional summary",
+  "annees_experience": 5.5,
   "competences_techniques": "tech skill1, skill2, skill3...",
   "langues": "Language1 (level), Language2 (level)",
   "formations": [
@@ -172,8 +190,7 @@ Your task: Extract ALL useful information from the CV below.
       "outils": "tool1, tool2, or empty string"
     }
   ],
-  "certifications": "• cert1, 
-  • cert2...",
+  "certifications": "cert1, cert2...",
   "projets": "project1, project2...",
   "centres_interet": "interest1, interest2..."
 }
@@ -193,14 +210,21 @@ Top of CV says "O'Brien Patrick"       → nom: "O'BRIEN",      prenom: "Patrick
 === EXPERIENCE EXAMPLES (with and without dates) ===
 Example WITH date:
   poste: "Développeur Web", entreprise: "Acme Corp", periode: "Jan 2022 - Déc 2023"
+  → contributes 2 years
 
 Example WITHOUT date (still include it!):
   poste: "Stage PFE", entreprise: "StartupXYZ", periode: ""
+  → contributes 0 years
 
-Example with ONLY company, no title, no date (still include it!):
-  poste: "", entreprise: "FreelanceProject", periode: ""
+=== YEARS CALCULATION EXAMPLES ===
+- "Jan 2020 - Dec 2022" → 3 years
+- "2021 - 2024" → 3 years
+- "Juin 2023 - Présent" → calculate until today (2025 - 2023 = 2 years)
+- "2022 - 2023" → 1 year
+- Total years = sum of all experience durations
 
 === CV TO ANALYZE ===
+
 
 PROMPT;
 
@@ -424,6 +448,8 @@ $competences = trim(implode(' | ', array_filter([
     trim((string)($parsed['competences_soft']       ?? '')),
 ])));
 
+
+$annees_experience = $parsed['annees_experience'] ?? 0;
 // =====================
 // NORMALISATION CERTIFICATIONS (AJOUTÉ POUR TABLEAU)
 // =====================
@@ -450,6 +476,7 @@ $finalData = [
     'certifications' => normalizeCertifications($parsed['certifications'] ?? ''),
     'diplomes'       => $diplomes,
     'experiences'    => $experiences,
+    'annees_experience' => $parsed['annees_experience'] ?? '0 an', // ← AJOUT ICI
 ];
 
 // =====================
@@ -461,7 +488,25 @@ $texte_brut  = substr($text, 0, 3000);
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
 }
+// Sauvegarde du fichier original
+$upload_dir = __DIR__ . '/uploads/originals/';
+if (!is_dir($upload_dir)) {
+    mkdir($upload_dir, 0777, true);
+}
 
+// Générer un nom unique pour éviter les conflits
+$original_filename = uniqid() . '_' . basename($_FILES['cv_file']['name']);
+$original_path = $upload_dir . $original_filename;
+
+// Déplacer le fichier uploadé (attention : $tmpPath est déjà utilisé)
+// Le fichier est déjà dans $tmpPath, on le copie
+copy($tmpPath, $original_path);
+
+// Ajouter le chemin dans $finalData
+$finalData['fichier_original'] = 'uploads/originals/' . $original_filename;
+
+
+$_SESSION['import_data']['fichier_original'] = $finalData['fichier_original'];
 $_SESSION['import_data']       = $finalData;
 $_SESSION['import_logo_type']  = $logo_type;
 $_SESSION['import_texte_brut'] = $texte_brut;

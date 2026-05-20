@@ -24,6 +24,7 @@ $email_get = $data['email'] ?? '';
 $telephone_get = $data['telephone'] ?? '';
 $competences_get = $data['competences'] ?? '';
 $langues_get = $data['langues'] ?? '';
+$fichier_original_get = $data['fichier_original'] ?? '';
 
 // Certifications : on s'assure que c'est un tableau
 $certifications_get = [];
@@ -36,6 +37,7 @@ if (isset($data['certifications'])) {
     }
 }
 
+$annees_experience_get = $data['annees_experience'] ?? '0 an';
 $diplomes_get = $data['diplomes'] ?? [];
 $experiences_get = $data['experiences'] ?? [];
 ?>
@@ -60,6 +62,7 @@ $experiences_get = $data['experiences'] ?? [];
                     <option value="link" <?= $logo_type_get === 'link' ? 'selected' : '' ?>>Logo WAMA LINK</option>
                 </select>
             </div>
+            <input type="hidden" name="fichier_original" value="<?= htmlspecialchars($fichier_original_get) ?>">
 
             <!-- Informations personnelles -->
             <div>
@@ -71,6 +74,7 @@ $experiences_get = $data['experiences'] ?? [];
                     <input type="text" name="nom" placeholder="Nom" value="<?= htmlspecialchars($nom_get) ?>" class="px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all" required>
                     <input type="text" name="prenom" placeholder="Prénom" value="<?= htmlspecialchars($prenom_get) ?>" class="px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all" required>
                     <input type="text" name="poste" placeholder="Poste (ex: Data Scientist)" value="<?= htmlspecialchars($poste_get) ?>" class="px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all">
+<input type="text" name="annees_experience" value="<?= htmlspecialchars($annees_experience_get) ?>" class="px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all">                    
                     <input type="tel" name="telephone" placeholder="Téléphone" value="<?= htmlspecialchars($telephone_get) ?>" class="px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all">
                     <input type="email" name="email" placeholder="Email" value="<?= htmlspecialchars($email_get) ?>" class="px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all">
                 </div>

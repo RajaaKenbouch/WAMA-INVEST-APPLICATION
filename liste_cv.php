@@ -8,7 +8,7 @@ $offset = ($page - 1) * $limit;
 $search = $_GET['search'] ?? '';
 $poste_filter = $_GET['poste_filter'] ?? '';
 
-
+// Compter le total
 $countSql = "SELECT COUNT(*) as total FROM cv WHERE 1=1";
 $countParams = [];
 if (!empty($search)) {
@@ -24,7 +24,7 @@ $countStmt->execute($countParams);
 $total = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 $totalPages = ceil($total / $limit);
 
-
+// Récupérer les CV (sans les JOIN erronés)
 $sql = "SELECT * FROM cv WHERE 1=1";
 $params = [];
 if (!empty($search)) {
@@ -45,7 +45,7 @@ foreach ($params as $key => $value) {
 $stmt->execute();
 $cvs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-
+// Récupérer les postes uniques pour le filtre
 $stmtPostes = $pdo->query("SELECT DISTINCT poste FROM cv WHERE poste IS NOT NULL AND poste != '' ORDER BY poste");
 $postes = $stmtPostes->fetchAll(PDO::FETCH_COLUMN);
 ?>
@@ -76,7 +76,7 @@ $postes = $stmtPostes->fetchAll(PDO::FETCH_COLUMN);
 
             <?php if (count($cvs) === 0): ?>
                 <div class="text-center py-12">
-                    <span class="material-symbols-outlined text-6xl text-slate-300">folder_VIDE</span>
+                    <span class="material-symbols-outlined text-6xl text-slate-300">folder_empty</span>
                     <p class="text-slate-500 mt-4">Aucun CV trouvé</p>
                 </div>
             <?php else: ?>
@@ -90,7 +90,7 @@ $postes = $stmtPostes->fetchAll(PDO::FETCH_COLUMN);
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Nom</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Prénom</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Poste</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold">Email</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Année d'expérience</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Date</th>
                                 <th class="px-4 py-3 text-center text-sm font-semibold">Action</th>
                             </tr>
@@ -112,6 +112,9 @@ $postes = $stmtPostes->fetchAll(PDO::FETCH_COLUMN);
                                         <div class="dropdown-content">
                                             <a href="download_cv_by_id.php?id=<?= $cv['id'] ?>" class="dropdown-item">
                                                 <span class="icon">📥</span> Télécharger
+                                            </a>
+                                            <a href="download_original.php?id=<?= $cv['id'] ?>" class="dropdown-item">
+                                                <span class="icon">📄</span> Original
                                             </a>
                                             <a href="delete_cv.php?id=<?= $cv['id'] ?>" class="dropdown-item delete" onclick="return confirm('Supprimer définitivement ce CV ?')">
                                                 <span class="icon">🗑️</span> Supprimer

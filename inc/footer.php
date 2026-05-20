@@ -28,11 +28,8 @@
                 </ul>
             </div>
         </div>
-        <div class="flex flex-col md:flex-row justify-between items-center pt-6 border-t border-slate-100">
+        <div class="flex flex-col md:flex-row justify-center pt-6 border-t border-slate-100">
             <p class="text-xs text-slate-400">© 2026 WAMA INVEST - Application de génération de CV</p>
-            <div class="flex gap-6 mt-4 md:mt-0">
-                <span class="text-xs text-slate-400">Développé par Kenbouch Rajaa</span>
-            </div>
         </div>
     </div>
 </footer>
