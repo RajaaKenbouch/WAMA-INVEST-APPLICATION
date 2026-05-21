@@ -199,7 +199,7 @@ $canvas->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) u
     $left = 45;
     $right = 45;
     $top = 18;
-    $lineY = 82;
+    $lineY = 95;
     $blue = [54 / 255, 95 / 255, 145 / 255];
     $gray = [75 / 255, 85 / 255, 99 / 255];
 

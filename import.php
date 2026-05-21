@@ -284,6 +284,7 @@ $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $curlError = curl_error($ch);
 curl_close($ch);
 
+
 // =====================
 // GESTION ERREURS CURL (AVEC TOAST)
 // =====================
