@@ -249,6 +249,7 @@ $certifications_str = implode("\n", $certifications_list);
         <input type="hidden" name="poste" value="<?= htmlspecialchars($poste) ?>">
         <input type="hidden" name="email" value="<?= htmlspecialchars($email) ?>">
         <input type="hidden" name="telephone" value="<?= htmlspecialchars($telephone) ?>">
+        <input type="hidden" name="annees_experience" value="<?= htmlspecialchars($annees_experience) ?>">
         <input type="hidden" name="competences" value="<?= htmlspecialchars($_POST['competences'] ?? '') ?>">
         <input type="hidden" name="certifications" value="<?= htmlspecialchars(implode("\n", $certifications_list)) ?>">
         <input type="hidden" name="diplome_html" value="<?= htmlspecialchars($diplome_html) ?>">

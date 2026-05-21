@@ -1,6 +1,7 @@
 <?php
 require 'vendor/autoload.php';
 use Dompdf\Dompdf;
+use Dompdf\Options;
 
 $nom = $_POST['nom'] ?? '';
 $prenom = $_POST['prenom'] ?? '';
@@ -72,77 +73,139 @@ if (!empty($certifications)) {
 }
 
 $html = "
+<!DOCTYPE html>
+<html lang='fr'>
+<head>
+<meta charset='UTF-8'>
 <style>
+    @page {
+        margin: 22mm 18mm;
+    }
+    * {
+        box-sizing: border-box;
+    }
     body {
-        font-family: 'Segoe UI', Arial, sans-serif;
-        margin: 30px;
+        color: #1f2933;
+        font-family: 'DejaVu Sans', Arial, sans-serif;
+        font-size: 12px;
+        line-height: 1.45;
+        margin: 0;
     }
     .cv {
-        background: white;
-        padding: 35px;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-        border-radius: 8px;
+        background: #ffffff;
+        width: 100%;
     }
     .header {
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        padding-bottom: 15px;
-        margin-bottom: 20px;
+        border-bottom: 2px solid #365F91;
+        margin-bottom: 18px;
+        padding-bottom: 12px;
+        width: 100%;
+    }
+    .header-table {
+        border-collapse: collapse;
+        width: 100%;
+    }
+    .logo-cell {
+        text-align: left;
+        vertical-align: middle;
+        width: 45%;
+    }
+    .contact-cell {
+        text-align: right;
+        vertical-align: middle;
+        width: 55%;
     }
     .logo {
-        width: 100px;
+        height: auto;
+        max-width: 115px;
     }
     .contact-info {
+        color: #4b5563;
+        font-size: 11px;
+        line-height: 1.5;
         text-align: right;
-        font-size: 12px;
-        line-height: 1.4;
-        color: #555;
     }
     h1 {
         color: #365F91;
+        font-size: 25px;
+        line-height: 1.2;
+        margin: 16px 0 4px;
         text-align: center;
-        font-size: 28px;
-        margin: 20px 0 5px;
+        text-transform: uppercase;
     }
     .sous-titre {
-        text-align: center;
-        font-size: 16px;
         color: #1a73e8;
-        margin-bottom: 25px;
-        font-weight: 500;
+        font-size: 14px;
+        font-weight: bold;
+        margin-bottom: 12px;
+        text-align: center;
+    }
+    .experience-years {
+        color: #1a73e8;
+        font-size: 12px;
+        margin-bottom: 16px;
+        text-align: center;
     }
     h2 {
-        font-size: 16px;
-        padding: 8px;
-        margin-top: 25px;
-        text-transform: uppercase;
-        color: #90E0EF;
         background-color: #365F91;
-        border-radius: 4px;
+        color: #90E0EF;
+        font-size: 13px;
+        letter-spacing: 0;
+        margin: 18px 0 8px;
+        padding: 7px 9px;
+        text-transform: uppercase;
     }
     .section {
-        margin: 15px 0;
+        margin: 0 0 12px;
     }
-   
+    .section div {
+        page-break-inside: avoid;
+    }
+    p {
+        margin: 0 0 7px;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+    }
+    ul {
+        margin: 6px 0 0 18px;
+        padding: 0;
+    }
     li {
         margin-bottom: 5px;
+        overflow-wrap: break-word;
+        word-wrap: break-word;
+    }
+    strong {
+        color: #1f2933;
+    }
+    em {
+        color: #4b5563;
     }
 </style>
+</head>
+<body>
 
 <div class='cv'>
     <div class='header'>
-        " . ($logo_base64 ? "<img src='$logo_base64' class='logo'>" : "") . "
-        <div class='contact-info'>
-            +(212) 520 673 877<br>
-            info@wama-invest.com
-        </div>
+        <table class='header-table'>
+            <tr>
+                <td class='logo-cell'>
+                    " . ($logo_base64 ? "<img src='$logo_base64' class='logo' alt='WAMA'>" : "") . "
+                </td>
+                <td class='contact-cell'>
+                    <div class='contact-info'>
+                        +(212) 520 673 877<br>
+                        info@wama-invest.com
+                    </div>
+                </td>
+            </tr>
+        </table>
     </div>
 
     <h1>" . strtoupper(htmlspecialchars($nom)) . " " . ucfirst(htmlspecialchars($prenom)) . "</h1>
     <div class='sous-titre'>" . htmlspecialchars($poste) . "</div>
 
-" . ($annees_experience !== '0 an' ? "<div style='text-align:center; color:#1a73e8; margin-bottom:15px;'> Expérience : " . htmlspecialchars($annees_experience) . "</div>" : "") . "    " . ($show_competences ? "
+" . ($annees_experience !== '0 an' ? "<div class='experience-years'>Expérience : " . htmlspecialchars($annees_experience) . "</div>" : "") . "    " . ($show_competences ? "
     <div class='section'>
         <h2>COMPÉTENCES PROFESSIONNELLES</h2>
         $competences
@@ -172,14 +235,22 @@ $html = "
         <p>$langues</p>
     </div>" : "") . "
 </div>
+</body>
+</html>
 ";
 
-$dompdf = new Dompdf();
-$dompdf->loadHtml($html);
+$options = new Options();
+$options->set('defaultFont', 'DejaVu Sans');
+$options->set('isHtml5ParserEnabled', true);
+
+$dompdf = new Dompdf($options);
+$dompdf->loadHtml($html, 'UTF-8');
 $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
 
-ob_end_clean();
+if (ob_get_length()) {
+    ob_end_clean();
+}
 $dompdf->stream("CV_" . $nom . "_" . $prenom . ".pdf", ["Attachment" => true]);
 exit();
 ?>
