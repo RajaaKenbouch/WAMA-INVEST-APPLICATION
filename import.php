@@ -84,6 +84,24 @@ if (empty($text)) {
 // =====================
 // PROMPT (IDENTIQUE - NON MODIFIÉ)
 // =====================
+function truncateTextForGemini($value, $limit) {
+    if ($limit <= 0) return $value;
+    if (function_exists('mb_substr')) {
+        return mb_substr($value, 0, $limit, 'UTF-8');
+    }
+    return substr($value, 0, $limit);
+}
+
+$maxCvInputChars = isset($_ENV['GEMINI_MAX_CV_CHARS'])
+    ? max(1, (int)$_ENV['GEMINI_MAX_CV_CHARS'])
+    : 50000;
+$maxGeminiOutputTokens = isset($_ENV['GEMINI_MAX_OUTPUT_TOKENS'])
+    ? max(1024, (int)$_ENV['GEMINI_MAX_OUTPUT_TOKENS'])
+    : 32768;
+$geminiTimeoutSeconds = isset($_ENV['GEMINI_TIMEOUT_SECONDS'])
+    ? max(30, (int)$_ENV['GEMINI_TIMEOUT_SECONDS'])
+    : 120;
+
 $prompt = <<<PROMPT
 You are a world-class CV/Resume parser with 20 years of experience reading resumes from all countries, cultures, and formats.
 
@@ -228,7 +246,7 @@ Example WITHOUT date (still include it!):
 
 PROMPT;
 
-$prompt .= "\n\n" . substr($text, 0, 12000);
+$prompt .= "\n\n" . truncateTextForGemini($text, $maxCvInputChars);
 
 // =====================
 // APPEL GEMINI API (IDENTIQUE - NON MODIFIÉ)
@@ -242,7 +260,7 @@ $payload = json_encode([
     ]],
     'generationConfig' => [
         'temperature'     => 0.1,
-        'maxOutputTokens' => 8192,
+        'maxOutputTokens' => $maxGeminiOutputTokens,
     ]
 ], JSON_INVALID_UTF8_SUBSTITUTE);
 
@@ -258,7 +276,7 @@ curl_setopt_array($ch, [
     CURLOPT_POST           => true,
     CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
     CURLOPT_POSTFIELDS     => $payload,
-    CURLOPT_TIMEOUT        => 60,
+    CURLOPT_TIMEOUT        => $geminiTimeoutSeconds,
 ]);
 
 $response  = curl_exec($ch);
@@ -483,7 +501,7 @@ $finalData = [
 // REDIRECTION (AVEC TOAST SUCCÈS)
 // =====================
 $logo_type   = $_POST['logo_type'] ?? 'invest';
-$texte_brut  = substr($text, 0, 3000);
+$texte_brut  = truncateTextForGemini($text, 10000);
 
 if (session_status() !== PHP_SESSION_ACTIVE) {
     session_start();
