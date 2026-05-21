@@ -14,6 +14,19 @@ function redirectImportError($message) {
     exit;
 }
 
+if (!function_exists('array_is_list')) {
+    function array_is_list(array $array) {
+        $expectedKey = 0;
+        foreach ($array as $key => $_) {
+            if ($key !== $expectedKey) {
+                return false;
+            }
+            $expectedKey++;
+        }
+        return true;
+    }
+}
+
 function lowerText($value) {
     $value = trim((string)$value);
     return function_exists('mb_strtolower') ? mb_strtolower($value, 'UTF-8') : strtolower($value);
