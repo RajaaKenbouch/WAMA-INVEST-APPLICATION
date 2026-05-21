@@ -79,7 +79,7 @@ $html = "
 <meta charset='UTF-8'>
 <style>
     @page {
-        margin: 16mm 16mm 10mm;
+        margin: 36mm 16mm 10mm;
     }
     * {
         box-sizing: border-box;
@@ -96,6 +96,11 @@ $html = "
         width: 100%;
     }
     .header {
+        position: fixed;
+        top: -26mm;
+        left: 0;
+        right: 0;
+        height: 22mm;
         border-bottom: 2px solid #365F91;
         margin-bottom: 18px;
         padding-bottom: 12px;
