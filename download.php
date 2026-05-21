@@ -29,12 +29,6 @@ if ($logo_type === 'invest') {
     $logo_path = __DIR__ . '/images/logo wama link.png';
 }
 
-if (file_exists($logo_path)) {
-    $logo_base64 = 'data:image/png;base64,' . base64_encode(file_get_contents($logo_path));
-} else {
-    $logo_base64 = ''; 
-}
-
 // Formater les compétences en liste
 if (!empty($competences) && strpos($competences, '-') !== false) {
     $competences = str_replace('- ', '', $competences);
@@ -79,7 +73,7 @@ $html = "
 <meta charset='UTF-8'>
 <style>
     @page {
-        margin: 36mm 16mm 10mm;
+        margin: 34mm 16mm 10mm;
     }
     * {
         box-sizing: border-box;
@@ -94,41 +88,6 @@ $html = "
     .cv {
         background: #ffffff;
         width: 100%;
-    }
-    .header {
-        position: fixed;
-        top: -26mm;
-        left: 0;
-        right: 0;
-        height: 22mm;
-        border-bottom: 2px solid #365F91;
-        margin-bottom: 18px;
-        padding-bottom: 12px;
-        width: 100%;
-    }
-    .header-table {
-        border-collapse: collapse;
-        width: 100%;
-    }
-    .logo-cell {
-        text-align: left;
-        vertical-align: middle;
-        width: 45%;
-    }
-    .contact-cell {
-        text-align: right;
-        vertical-align: middle;
-        width: 55%;
-    }
-    .logo {
-        height: auto;
-        width: 115px;
-    }
-    .contact-info {
-        color: #4b5563;
-        font-size: 11px;
-        line-height: 1.5;
-        text-align: right;
     }
     h1 {
         color: #365F91;
@@ -188,22 +147,6 @@ $html = "
 <body>
 
 <div class='cv'>
-    <div class='header'>
-        <table class='header-table'>
-            <tr>
-                <td class='logo-cell'>
-                    " . ($logo_base64 ? "<img src='$logo_base64' class='logo' alt='WAMA'>" : "") . "
-                </td>
-                <td class='contact-cell'>
-                    <div class='contact-info'>
-                        +(212) 520 673 877<br>
-                        info@wama-invest.com
-                    </div>
-                </td>
-            </tr>
-        </table>
-    </div>
-
     <h1>" . strtoupper(htmlspecialchars($nom)) . " " . ucfirst(htmlspecialchars($prenom)) . "</h1>
     <div class='sous-titre'>" . htmlspecialchars($poste) . "</div>
 
@@ -249,6 +192,40 @@ $dompdf = new Dompdf($options);
 $dompdf->loadHtml($html, 'UTF-8');
 $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
+
+$canvas = $dompdf->getCanvas();
+$canvas->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) use ($logo_path) {
+    $pageWidth = $canvas->get_width();
+    $left = 45;
+    $right = 45;
+    $top = 18;
+    $lineY = 82;
+    $blue = [54 / 255, 95 / 255, 145 / 255];
+    $gray = [75 / 255, 85 / 255, 99 / 255];
+
+    if (file_exists($logo_path)) {
+        $logoWidth = 86;
+        $logoHeight = 58;
+        $imageSize = @getimagesize($logo_path);
+
+        if ($imageSize && !empty($imageSize[0])) {
+            $logoHeight = $logoWidth * ($imageSize[1] / $imageSize[0]);
+        }
+
+        $canvas->image($logo_path, $left, $top, $logoWidth, $logoHeight);
+    }
+
+    $font = $fontMetrics->getFont('DejaVu Sans', 'normal') ?: $fontMetrics->getFont('Helvetica', 'normal');
+    $contactLines = ['+(212) 520 673 877', 'info@wama-invest.com'];
+
+    foreach ($contactLines as $index => $line) {
+        $fontSize = 9;
+        $textWidth = $fontMetrics->getTextWidth($line, $font, $fontSize);
+        $canvas->text($pageWidth - $right - $textWidth, 35 + ($index * 13), $line, $font, $fontSize, $gray);
+    }
+
+    $canvas->line($left, $lineY, $pageWidth - $right, $lineY, $blue, 1.5);
+});
 
 if (ob_get_length()) {
     ob_end_clean();
