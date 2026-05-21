@@ -50,7 +50,7 @@ if (!empty($_POST['exp_date']) && !empty($_POST['exp_poste']) && !empty($_POST['
         
         if (!empty($date) || !empty($poste_exp) || !empty($entreprise)) {
             $experience_html .= "
-            <div style='margin-bottom: 15px;'>
+            <div style='margin-bottom: 10px;'>
                 <p>• <strong>$date</strong> : <strong>$poste_exp</strong> - $entreprise</p>
                 <p>$description</p>
                 <p><em><strong>Outils:</strong>  $outils</em></p>

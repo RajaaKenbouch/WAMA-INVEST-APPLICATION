@@ -79,7 +79,7 @@ $html = "
 <meta charset='UTF-8'>
 <style>
     @page {
-        margin: 22mm 18mm;
+        margin: 16mm 16mm 10mm;
     }
     * {
         box-sizing: border-box;
@@ -156,13 +156,10 @@ $html = "
         text-transform: uppercase;
     }
     .section {
-        margin: 0 0 12px;
-    }
-    .section div {
-        page-break-inside: avoid;
+        margin: 0 0 8px;
     }
     p {
-        margin: 0 0 7px;
+        margin: 0 0 5px;
         overflow-wrap: break-word;
         word-wrap: break-word;
     }
