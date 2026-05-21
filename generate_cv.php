@@ -46,14 +46,16 @@ if (!empty($_POST['exp_date']) && !empty($_POST['exp_poste']) && !empty($_POST['
         $poste_exp = htmlspecialchars($_POST['exp_poste'][$i]);
         $entreprise = htmlspecialchars($_POST['exp_entreprise'][$i]);
         $description = nl2br(htmlspecialchars($_POST['exp_description'][$i] ?? ''), false);
-        $outils = htmlspecialchars($_POST['exp_outils'][$i] ?? '');
+        $outils_raw = trim($_POST['exp_outils'][$i] ?? '');
+        $outils = htmlspecialchars($outils_raw);
+        $outils_html = $outils_raw !== '' ? "<p><em><strong>Outils:</strong> $outils</em></p>" : "";
         
         if (!empty($date) || !empty($poste_exp) || !empty($entreprise)) {
             $experience_html .= "
             <div style='margin-bottom: 10px;'>
                 <p>• <strong>$date</strong> : <strong>$poste_exp</strong> - $entreprise</p>
                 <p>$description</p>
-                <p><em><strong>Outils:</strong>  $outils</em></p>
+                $outils_html
             </div>
             ";
         }
