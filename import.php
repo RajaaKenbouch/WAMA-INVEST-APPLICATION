@@ -172,8 +172,19 @@ function callGeminiJson($apiKey, $prompt, $maxOutputTokens = 4096, $label = 'Gem
 
     if ($httpCode !== 200) {
         $errorData = json_decode((string)$response, true);
-        $errorMsg  = $errorData['error']['message'] ?? "Erreur API HTTP $httpCode";
-        throw new RuntimeException("Gemini API: " . $errorMsg);
+        $errorMsg  = $errorData['error']['message'] ?? trim((string)$response);
+        $errorStatus = $errorData['error']['status'] ?? '';
+        $message = "Gemini API HTTP $httpCode";
+
+        if ($errorStatus !== '') {
+            $message .= " [$errorStatus]";
+        }
+
+        if ($errorMsg !== '') {
+            $message .= "\n" . $errorMsg;
+        }
+
+        throw new RuntimeException($message);
     }
 
     $geminiData = json_decode((string)$response, true, 512, JSON_INVALID_UTF8_SUBSTITUTE);
@@ -830,7 +841,10 @@ try {
     $parsed['experiences'] = $experiences;
     $parsed['annees_experience'] = calculateTotalExperience($experiences);
 } catch (Throwable $e) {
-    redirectImportError($e->getMessage());
+    echo '<pre style="margin:24px;padding:16px;border:1px solid #ef4444;background:#fef2f2;color:#991b1b;border-radius:8px;white-space:pre-wrap;">';
+    echo htmlspecialchars($e->getMessage(), ENT_QUOTES | ENT_SUBSTITUTE, 'UTF-8');
+    echo '</pre>';
+    exit;
 }
 
 applyNameFallback($parsed, $text);
