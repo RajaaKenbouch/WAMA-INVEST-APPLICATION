@@ -45,7 +45,7 @@ if (!empty($_POST['exp_date']) && !empty($_POST['exp_poste']) && !empty($_POST['
         $date = htmlspecialchars($_POST['exp_date'][$i]);
         $poste_exp = htmlspecialchars($_POST['exp_poste'][$i]);
         $entreprise = htmlspecialchars($_POST['exp_entreprise'][$i]);
-        $description = htmlspecialchars($_POST['exp_description'][$i] ?? '');
+        $description = nl2br(htmlspecialchars($_POST['exp_description'][$i] ?? ''), false);
         $outils = htmlspecialchars($_POST['exp_outils'][$i] ?? '');
         
         if (!empty($date) || !empty($poste_exp) || !empty($entreprise)) {

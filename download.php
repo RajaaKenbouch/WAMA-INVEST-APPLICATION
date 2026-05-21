@@ -117,7 +117,7 @@ $html = "
     }
     .logo {
         height: auto;
-        max-width: 115px;
+        width: 115px;
     }
     .contact-info {
         color: #4b5563;
