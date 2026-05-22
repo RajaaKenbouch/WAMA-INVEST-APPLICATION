@@ -8,6 +8,21 @@ $telephone = $_POST['telephone'] ?? '';
 $fichier_original = $_POST['fichier_original'] ?? '';
 $username = $_POST['username'] ?? '' ;
 
+if (trim($username) === '') {
+    $nom_clean = trim($nom);
+    $prenom_clean = trim($prenom);
+    $username = '';
+
+    if ($prenom_clean !== '') {
+        $username .= strtoupper(substr($prenom_clean, 0, 1));
+    }
+
+    if ($nom_clean !== '') {
+        $username .= strtoupper(substr($nom_clean, 0, 1));
+        $username .= strtoupper(substr($nom_clean, -1));
+    }
+}
+
 
 $competences = nl2br($_POST['competences'] ?? '');
 $certifications_raw = $_POST['certifications'] ?? '';
@@ -248,6 +263,7 @@ $certifications_str = implode("\n", $certifications_list);
     </div>
 
     <form action="download.php" method="POST">
+        <input type="hidden" name="username" value="<?= htmlspecialchars($username) ?>">
         <input type="hidden" name="nom" value="<?= htmlspecialchars($nom) ?>">
         <input type="hidden" name="prenom" value="<?= htmlspecialchars($prenom) ?>">
         <input type="hidden" name="poste" value="<?= htmlspecialchars($poste) ?>">

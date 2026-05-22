@@ -17,6 +17,20 @@ $langues = $_POST['langues'] ?? '';
 $logo_type = $_POST['logo_type'] ?? 'link';
 $annees_experience = $_POST['annees_experience'] ?? '0 an';
 
+if (trim($username) === '') {
+    $nom_clean = trim($nom);
+    $prenom_clean = trim($prenom);
+    $username = '';
+
+    if ($prenom_clean !== '') {
+        $username .= strtoupper(substr($prenom_clean, 0, 1));
+    }
+
+    if ($nom_clean !== '') {
+        $username .= strtoupper(substr($nom_clean, 0, 1));
+        $username .= strtoupper(substr($nom_clean, -1));
+    }
+}
 
 // Vérifier si les sections sont vides
 $show_competences = !empty(trim(strip_tags($competences)));
@@ -149,7 +163,7 @@ $html = "
 <body>
 
 <div class='cv'>
-    <h1><?= htmlspecialchars(($username)) ?> </h1>
+    <h1>" . htmlspecialchars($username) . "</h1>
     <div class='sous-titre'>" . htmlspecialchars($poste) . "</div>
 
 " . ($annees_experience !== '0 an' ? "<div class='experience-years'>Expérience : " . htmlspecialchars($annees_experience) . "</div>" : "") . "    " . ($show_competences ? "
