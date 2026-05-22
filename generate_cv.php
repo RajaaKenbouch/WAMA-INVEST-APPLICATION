@@ -6,6 +6,8 @@ $annees_experience = $_POST['annees_experience'] ?? '0 an';
 $email = $_POST['email'] ?? '';
 $telephone = $_POST['telephone'] ?? '';
 $fichier_original = $_POST['fichier_original'] ?? '';
+$username = $_POST['username'] ?? '' ;
+
 
 $competences = nl2br($_POST['competences'] ?? '');
 $certifications_raw = $_POST['certifications'] ?? '';
@@ -84,10 +86,10 @@ $show_langues = !empty($langues_list);
 
 require_once 'db.php';
 
-$stmt = $pdo->prepare("INSERT INTO cv (nom, prenom, poste, email, telephone, competences, logo_type, fichier_original, certifications,annees_experience) 
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt = $pdo->prepare("INSERT INTO cv (username,nom, prenom, poste, email, telephone, competences, logo_type, fichier_original, certifications,annees_experience) 
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)");
 $stmt->execute([
-    $nom, $prenom, $poste, $email, $telephone,
+    $username, $nom, $prenom, $poste, $email, $telephone,
     $competences, $logo_type, $fichier_original,
     $certifications,$annees_experience
 ]);
@@ -165,13 +167,13 @@ $certifications_str = implode("\n", $certifications_list);
             </div>
         </div>
 
-        <h1><?= htmlspecialchars(strtoupper($nom)) ?> <?= htmlspecialchars(ucfirst($prenom)) ?></h1>
+        <h1><?= htmlspecialchars(($username)) ?> </h1>
         <div class="sous-titre"><?= htmlspecialchars($poste) ?></div>
-<?php if ($annees_experience !== '0 an'): ?>
-    <div class="experience-years" style="text-align: center; margin-top: 5px; color: #1a73e8;">
-        Expérience : <?= htmlspecialchars($annees_experience) ?>
-    </div>
-<?php endif; ?>
+        <?php if ($annees_experience !== '0 an'): ?>
+            <div class="experience-years" style="text-align: center; margin-top: 5px; color: #1a73e8;">
+                Expérience : <?= htmlspecialchars($annees_experience) ?>
+            </div>
+        <?php endif; ?>
 
         <div>
             <?php if ($show_competences): ?>

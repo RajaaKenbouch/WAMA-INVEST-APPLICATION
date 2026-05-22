@@ -136,7 +136,7 @@ $html = "
         </div>
     </div>
 
-    <h1>" . strtoupper(htmlspecialchars($cv['nom'])) . " " . ucfirst(htmlspecialchars($cv['prenom'])) . "</h1>
+    <h1><?= htmlspecialchars(($username)) ?> </h1>
     <div class='sous-titre'>" . htmlspecialchars($cv['poste']) . "</div>
 " . ($annees_experience !== '0 an' ? "<div style='text-align:center; color:#1a73e8; margin-bottom:15px;'> Expérience : " . htmlspecialchars($annees_experience) . "</div>" : "") . "
     " . ($show_competences ? "

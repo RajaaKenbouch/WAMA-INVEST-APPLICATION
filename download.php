@@ -3,6 +3,7 @@ require 'vendor/autoload.php';
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
+$username = $_POST['username'] ?? '';
 $nom = $_POST['nom'] ?? '';
 $prenom = $_POST['prenom'] ?? '';
 $poste = $_POST['poste'] ?? '';
@@ -15,6 +16,7 @@ $experience_html = $_POST['experience_html'] ?? '';
 $langues = $_POST['langues'] ?? '';
 $logo_type = $_POST['logo_type'] ?? 'link';
 $annees_experience = $_POST['annees_experience'] ?? '0 an';
+
 
 // Vérifier si les sections sont vides
 $show_competences = !empty(trim(strip_tags($competences)));
@@ -147,7 +149,7 @@ $html = "
 <body>
 
 <div class='cv'>
-    <h1>" . strtoupper(htmlspecialchars($nom)) . " " . ucfirst(htmlspecialchars($prenom)) . "</h1>
+    <h1><?= htmlspecialchars(($username)) ?> </h1>
     <div class='sous-titre'>" . htmlspecialchars($poste) . "</div>
 
 " . ($annees_experience !== '0 an' ? "<div class='experience-years'>Expérience : " . htmlspecialchars($annees_experience) . "</div>" : "") . "    " . ($show_competences ? "
