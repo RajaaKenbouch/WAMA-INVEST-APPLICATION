@@ -6,7 +6,7 @@
         <div class="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-12 mb-12">
             <div class="col-span-2">
                 <div class="flex items-center gap-2 mb-4">
-                    <img src="images/logo WAMA.png" alt="error" width="15%">
+                    <img src="images/logo_wama.png" alt="error" width="15%">
                 </div>
                 <p class="text-sm text-on-surface-variant max-w-xs">
                     La solution professionnelle pour la création de CV standardisés au format WAMA.

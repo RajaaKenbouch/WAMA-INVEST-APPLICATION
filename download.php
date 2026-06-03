@@ -3,6 +3,7 @@ require 'vendor/autoload.php';
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
+// Récupération des données
 $username = $_POST['username'] ?? '';
 $nom = $_POST['nom'] ?? '';
 $prenom = $_POST['prenom'] ?? '';
@@ -17,6 +18,7 @@ $langues = $_POST['langues'] ?? '';
 $logo_type = $_POST['logo_type'] ?? 'link';
 $annees_experience = $_POST['annees_experience'] ?? '0 an';
 
+// Génération automatique du username si vide
 if (trim($username) === '') {
     $nom_clean = trim($nom);
     $prenom_clean = trim($prenom);
@@ -25,7 +27,6 @@ if (trim($username) === '') {
     if ($prenom_clean !== '') {
         $username .= strtoupper(substr($prenom_clean, 0, 1));
     }
-
     if ($nom_clean !== '') {
         $username .= strtoupper(substr($nom_clean, 0, 1));
         $username .= strtoupper(substr($nom_clean, -1));
@@ -39,13 +40,14 @@ $show_experiences = !empty(trim(strip_tags($experience_html)));
 $show_certifications = !empty(trim(strip_tags($certifications)));
 $show_langues = !empty(trim(strip_tags($langues)));
 
+// Logo
 if ($logo_type === 'invest') {
-    $logo_path = __DIR__ . '/images/logo WAMA.png';
+    $logo_path = __DIR__ . '/images/logo_wama.png';
 } else {
     $logo_path = __DIR__ . '/images/logo wama link.png';
 }
 
-// Formater les compétences en liste
+// Formater les compétences
 if (!empty($competences) && strpos($competences, '-') !== false) {
     $competences = str_replace('- ', '', $competences);
     $comp_array = explode("\n", $competences);
@@ -65,7 +67,6 @@ if (!empty($competences) && strpos($competences, '-') !== false) {
 
 // Traitement des certifications
 if (!empty($certifications)) {
-    // Remplacer les puces par des retours à la ligne
     $cert_clean = str_replace(['•', '▪', '·', '-'], "\n", $certifications);
     $cert_array = explode("\n", $cert_clean);
     $cert_array = array_filter(array_map('trim', $cert_array));
@@ -82,6 +83,7 @@ if (!empty($certifications)) {
     $certifications = "<p>Aucune certification</p>";
 }
 
+// HTML du PDF
 $html = "
 <!DOCTYPE html>
 <html lang='fr'>
@@ -166,7 +168,8 @@ $html = "
     <h1>" . htmlspecialchars($username) . "</h1>
     <div class='sous-titre'>" . htmlspecialchars($poste) . "</div>
 
-" . ($annees_experience !== '0 an' ? "<div class='experience-years'>Expérience : " . htmlspecialchars($annees_experience) . "</div>" : "") . "    " . ($show_competences ? "
+    " . ($annees_experience !== '0 an' ? "<div class='experience-years'>Expérience : " . htmlspecialchars($annees_experience) . "</div>" : "") . "    
+    " . ($show_competences ? "
     <div class='section'>
         <h2>COMPÉTENCES PROFESSIONNELLES</h2>
         $competences
@@ -180,7 +183,7 @@ $html = "
 
     " . ($show_experiences ? "
     <div class='section'>
-        <h2>EXPÉRIENCE PROFESSIONNELLE</h2>
+        <h2>EXPÉRIENCES PROFESSIONNELLES</h2>
         $experience_html
     </div>" : "") . "
 
@@ -200,6 +203,7 @@ $html = "
 </html>
 ";
 
+// Options DomPDF
 $options = new Options();
 $options->set('defaultFont', 'DejaVu Sans');
 $options->set('isHtml5ParserEnabled', true);
@@ -209,6 +213,7 @@ $dompdf->loadHtml($html, 'UTF-8');
 $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
 
+// Ajout du header (logo + contact) sur toutes les pages
 $canvas = $dompdf->getCanvas();
 $canvas->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) use ($logo_path) {
     $pageWidth = $canvas->get_width();
@@ -243,9 +248,25 @@ $canvas->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) u
     $canvas->line($left, $lineY, $pageWidth - $right, $lineY, $blue, 1.5);
 });
 
+// Sauvegarde du PDF sur le serveur (optionnel)
+$cv_id = $_POST['cv_id'] ?? 0;
+if ($cv_id) {
+    $pdf_output = $dompdf->output();
+    $pdf_dir = __DIR__ . '/uploads/pdfs/';
+    if (!is_dir($pdf_dir)) mkdir($pdf_dir, 0777, true);
+    $pdf_filename = 'cv_' . $cv_id . '.pdf';
+    file_put_contents($pdf_dir . $pdf_filename, $pdf_output);
+    
+    // Mettre à jour le chemin en BDD
+    require_once 'db.php';
+    $stmt = $pdo->prepare("UPDATE cv SET pdf_path = ? WHERE id = ?");
+    $stmt->execute(['uploads/pdfs/' . $pdf_filename, $cv_id]);
+}
+
+// Nettoyage et envoi du PDF
 if (ob_get_length()) {
     ob_end_clean();
 }
-$dompdf->stream("CV_" . $nom . "_" . $prenom . ".pdf", ["Attachment" => true]);
+$dompdf->stream("CV_" . $username . ".pdf", ["Attachment" => true]);
 exit();
 ?>

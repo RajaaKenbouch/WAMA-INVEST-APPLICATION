@@ -120,7 +120,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     <div class="bg-white rounded-2xl shadow-xl overflow-hidden">
         <div class="bg-primary-container px-8 py-6 text-center">
             <div class="flex justify-center mb-4">
-                <img src="images/logo WAMA.png" alt="error" width="20%">
+                <img src="images/logo_wama.png" alt="error" width="20%">
             </div>
             <p class="text-slate-300 text-sm mt-1">Générateur de CV professionnel</p>
         </div>

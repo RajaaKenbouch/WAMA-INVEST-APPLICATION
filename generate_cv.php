@@ -1,3 +1,5 @@
+<?php require_once 'inc/auth.php'; ?>
+<?php require_once 'inc/header.php'; ?>
 <?php
 $nom = $_POST['nom'] ?? '';
 $prenom = $_POST['prenom'] ?? '';
@@ -7,6 +9,7 @@ $email = $_POST['email'] ?? '';
 $telephone = $_POST['telephone'] ?? '';
 $fichier_original = $_POST['fichier_original'] ?? '';
 $username = $_POST['username'] ?? '' ;
+$user_id = $_SESSION['user_id'] ?? 0;
 
 if (trim($username) === '') {
     $nom_clean = trim($nom);
@@ -82,7 +85,7 @@ if (!empty($_POST['exp_date']) && !empty($_POST['exp_poste']) && !empty($_POST['
 $logo_type = $_POST['logo_type'] ?? 'link';
 
 if ($logo_type === 'invest') {
-    $logo_path = __DIR__ . '/images/logo WAMA.png';
+    $logo_path = __DIR__ . '/images/logo_wama.png';
 } else {
     $logo_path = __DIR__ . '/images/logo wama link.png';
 }
@@ -106,7 +109,7 @@ $stmt = $pdo->prepare("INSERT INTO cv (username,nom, prenom, poste, email, telep
 $stmt->execute([
     $username, $nom, $prenom, $poste, $email, $telephone,
     $competences, $logo_type, $fichier_original,
-    $certifications,$annees_experience
+    $certifications,$annees_experience,
 ]);
 $cv_id = $pdo->lastInsertId();
 
@@ -263,6 +266,7 @@ $certifications_str = implode("\n", $certifications_list);
     </div>
 
     <form action="download.php" method="POST">
+        <input type="hidden" name="cv_id" value="<?= $cv_id ?>">
         <input type="hidden" name="username" value="<?= htmlspecialchars($username) ?>">
         <input type="hidden" name="nom" value="<?= htmlspecialchars($nom) ?>">
         <input type="hidden" name="prenom" value="<?= htmlspecialchars($prenom) ?>">

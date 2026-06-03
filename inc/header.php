@@ -109,7 +109,7 @@ session_start();
     <div class="flex justify-between items-center px-6 h-16 w-full max-w-7xl mx-auto">
         <div class="flex items-center gap-2">
             <a href="home.php">
-                <img src="images/logo WAMA.png" alt="error" width="13%">
+                <img src="images/logo_wama.png" alt="error" width="13%">
             </a>
         </div>
         <div class="hidden md:flex items-center gap-8">

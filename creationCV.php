@@ -38,7 +38,7 @@ if (isset($data['certifications'])) {
     }
 }
 
-$annees_experience_get = $data['annees_experience'] ?? '0 an';
+$annees_experience_get = $data['annees_experience'] ?? '';
 $diplomes_get = $data['diplomes'] ?? [];
 $experiences_get = $data['experiences'] ?? [];
 ?>
@@ -135,7 +135,7 @@ $experiences_get = $data['experiences'] ?? [];
                             <div class="exp-item space-y-3 p-4 bg-slate-50 rounded-xl">
                                 <div class="grid md:grid-cols-3 gap-3">
                                     <input name="exp_date[]" value="<?= htmlspecialchars($e['periode'] ?? '') ?>" placeholder="Date" class="px-3 py-2 rounded-lg border border-slate-200">
-                                    <input name="exp_poste[]" value="<?= htmlspecialchars($e['poste'] ?? '') ?>" placeholder="Poste" class="px-3 py-2 rounded-lg border border-slate-200">
+                                    <input name="exp_poste[]" value="<?= htmlspecialchars($e['poste_exp'] ?? '') ?>" placeholder="Poste" class="px-3 py-2 rounded-lg border border-slate-200">
                                     <input name="exp_entreprise[]" value="<?= htmlspecialchars($e['entreprise'] ?? '') ?>" placeholder="Entreprise" class="px-3 py-2 rounded-lg border border-slate-200">
                                 </div>
                                 <textarea name="exp_description[]" placeholder="Description" class="w-full px-3 py-2 rounded-lg border border-slate-200"><?= htmlspecialchars($e['description'] ?? '') ?></textarea>

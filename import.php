@@ -201,7 +201,7 @@ Your task: Extract ALL useful information from the CV below.
   ],
   "experiences": [
     {
-      "poste": "job title, or empty string if unknown",
+      "poste": "job title (ex: Développeur Web, Data Scientist, Administrateur Systèmes) - MANDATORY: extract even if not explicitly labeled",
       "entreprise": "company name, or empty string if unknown",
       "periode": "start - end dates, or empty string if no date found",
       "description": "verbatim text from the CV (no rewriting), or empty string",
@@ -283,7 +283,8 @@ $response  = curl_exec($ch);
 $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $curlError = curl_error($ch);
 curl_close($ch);
- 
+
+// echo $response;
 
 // =====================
 // GESTION ERREURS CURL (AVEC TOAST)
@@ -312,6 +313,7 @@ if (!isset($geminiData['candidates'][0]['content']['parts'][0]['text'])) {
     header("Location: importationCV.php");
     exit;
 }
+
 
 $rawText = $geminiData['candidates'][0]['content']['parts'][0]['text'];
 
