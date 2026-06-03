@@ -17,6 +17,8 @@ if (!empty($_GET['data'])) {
     unset($_SESSION['import_data'], $_SESSION['import_logo_type'], $_SESSION['import_texte_brut']);
 }
 
+
+$username = $data['username'] ?? '';
 $nom_get = $data['nom'] ?? '';
 $prenom_get = $data['prenom'] ?? '';
 $poste_get = $data['poste'] ?? '';
@@ -26,13 +28,12 @@ $competences_get = $data['competences'] ?? '';
 $langues_get = $data['langues'] ?? '';
 $fichier_original_get = $data['fichier_original'] ?? '';
 
-// Certifications : on s'assure que c'est un tableau
+// Certifications
 $certifications_get = [];
 if (isset($data['certifications'])) {
     if (is_array($data['certifications'])) {
         $certifications_get = $data['certifications'];
     } elseif (is_string($data['certifications'])) {
-        // Si chaîne, on transforme en tableau
         $certifications_get = array_map('trim', explode("\n", $data['certifications']));
     }
 }
@@ -71,10 +72,14 @@ $experiences_get = $data['experiences'] ?? [];
                     Informations personnelles
                 </h2>
                 <div class="grid md:grid-cols-2 gap-4">
-                    <input type="text" name="nom" placeholder="Nom" value="<?= htmlspecialchars($nom_get) ?>" class="px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all" required>
-                    <input type="text" name="prenom" placeholder="Prénom" value="<?= htmlspecialchars($prenom_get) ?>" class="px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all" required>
+                    <input type="text" name="nom" id="nom" placeholder="Nom" value="<?= htmlspecialchars($nom_get) ?>" class="px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all" required>
+                    <input type="text" name="prenom" id="prenom" placeholder="Prénom" value="<?= htmlspecialchars($prenom_get) ?>" class="px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all">
+                    
+                    <!-- Champ username auto-généré (caché ou visible) -->
+                    <input type="text" name="username" id="username" placeholder="Username" value="" class="px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all">
+                    
                     <input type="text" name="poste" placeholder="Poste (ex: Data Scientist)" value="<?= htmlspecialchars($poste_get) ?>" class="px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all">
-<input type="text" name="annees_experience" value="<?= htmlspecialchars($annees_experience_get) ?>" class="px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all">                    
+                    <input type="text" name="annees_experience" value="<?= htmlspecialchars($annees_experience_get) ?>" placeholder="Années d'expérience" class="px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all">                    
                     <input type="tel" name="telephone" placeholder="Téléphone" value="<?= htmlspecialchars($telephone_get) ?>" class="px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all">
                     <input type="email" name="email" placeholder="Email" value="<?= htmlspecialchars($email_get) ?>" class="px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all">
                 </div>
@@ -164,7 +169,7 @@ $experiences_get = $data['experiences'] ?? [];
                 <textarea name="langues" rows="3" placeholder="Ex: Arabe (maternelle), Français (courant), Anglais (technique)..." class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all"><?= htmlspecialchars($langues_get) ?></textarea>
             </div>
 
-            <!-- Certifications - Version améliorée (dynamique) -->
+            <!-- Certifications -->
             <div>
                 <h2 class="text-lg font-bold text-primary-container mb-4 flex items-center gap-2">
                     <span class="material-symbols-outlined">verified</span>
@@ -209,16 +214,10 @@ $experiences_get = $data['experiences'] ?? [];
             </div>
             <?php endif; ?>
 
-            <!-- Bouton de soumission avec spinner -->
+            <!-- Bouton de soumission -->
             <div class="text-center pt-4">
                 <button type="submit" id="submitBtn" class="bg-primary-container text-white px-8 py-3 rounded-xl font-button text-button shadow-lg hover:shadow-xl transition-all active:scale-95 flex items-center justify-center gap-2 w-full md:w-auto mx-auto">
-                    <span class="btn-text">🚀 Générer mon CV</span>
-                    <span class="btn-spinner hidden">
-                        <svg class="animate-spin h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
-                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                    </span>
+                    Générer le CV
                 </button>
             </div>
         </form>
@@ -226,6 +225,24 @@ $experiences_get = $data['experiences'] ?? [];
 </div>
 
 <script>
+function generateUsername() {
+    let prenom = document.querySelector('input[name="prenom"]').value.trim();
+    let nom = document.querySelector('input[name="nom"]').value.trim();
+    
+    let username = '';
+    
+    if (prenom.length > 0) {
+        username += prenom.charAt(0).toUpperCase();
+    }
+    
+    if (nom.length > 0) {
+        username += nom.charAt(0).toUpperCase();
+        username += nom.charAt(nom.length - 1).toUpperCase();
+    }
+    
+    document.getElementById('username').value = username;
+}
+
 function addDiplome() {
     const div = document.createElement('div');
     div.className = 'diplome-item grid md:grid-cols-3 gap-3 p-4 bg-slate-50 rounded-xl';
@@ -264,16 +281,16 @@ function addCertification() {
     document.getElementById('certifications').appendChild(div);
 }
 
-// Gestion du spinner au submit
-document.getElementById('cvForm').addEventListener('submit', function(e) {
-    const btn = document.getElementById('submitBtn');
-    const btnText = btn.querySelector('.btn-text');
-    const btnSpinner = btn.querySelector('.btn-spinner');
+// Écouter les changements sur nom et prénom
+document.addEventListener('DOMContentLoaded', function() {
+    const nomInput = document.querySelector('input[name="nom"]');
+    const prenomInput = document.querySelector('input[name="prenom"]');
     
-    btn.disabled = true;
-    btn.classList.add('opacity-70', 'cursor-not-allowed');
-    btnText.textContent = 'Génération en cours...';
-    btnSpinner.classList.remove('hidden');
+    if (nomInput) nomInput.addEventListener('input', generateUsername);
+    if (prenomInput) prenomInput.addEventListener('input', generateUsername);
+    
+    // Générer au chargement si déjà rempli
+    generateUsername();
 });
 </script>
 

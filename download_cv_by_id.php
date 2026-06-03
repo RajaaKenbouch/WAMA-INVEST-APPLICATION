@@ -36,6 +36,22 @@ $certifications = nl2br(htmlspecialchars($certifications));
 
 
 $annees_experience = $cv['annees_experience'] ?? '0 an';
+$username = $cv['username'] ?? '';
+
+if (trim($username) === '') {
+    $nom_clean = trim($cv['nom'] ?? '');
+    $prenom_clean = trim($cv['prenom'] ?? '');
+    $username = '';
+
+    if ($prenom_clean !== '') {
+        $username .= strtoupper(substr($prenom_clean, 0, 1));
+    }
+
+    if ($nom_clean !== '') {
+        $username .= strtoupper(substr($nom_clean, 0, 1));
+        $username .= strtoupper(substr($nom_clean, -1));
+    }
+}
 // Logo
 $logo_type = $cv['logo_type'] ?? 'invest';
 if ($logo_type === 'link') {
@@ -136,7 +152,7 @@ $html = "
         </div>
     </div>
 
-    <h1>" . strtoupper(htmlspecialchars($cv['nom'])) . " " . ucfirst(htmlspecialchars($cv['prenom'])) . "</h1>
+    <h1>" . htmlspecialchars($username) . "</h1>
     <div class='sous-titre'>" . htmlspecialchars($cv['poste']) . "</div>
 " . ($annees_experience !== '0 an' ? "<div style='text-align:center; color:#1a73e8; margin-bottom:15px;'> Expérience : " . htmlspecialchars($annees_experience) . "</div>" : "") . "
     " . ($show_competences ? "

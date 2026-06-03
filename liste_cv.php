@@ -7,6 +7,24 @@ $offset = ($page - 1) * $limit;
 
 $search = $_GET['search'] ?? '';
 $poste_filter = $_GET['poste_filter'] ?? '';
+$order_by = $_GET['order_by'] ?? 'nom_asc';
+
+// Construction du ORDER BY
+switch ($order_by) {
+    case 'nom_asc':
+        $order_sql = "ORDER BY nom ASC, prenom ASC";
+        break;
+    case 'nom_desc':
+        $order_sql = "ORDER BY nom DESC, prenom DESC";
+        break;
+    case 'date_asc':
+        $order_sql = "ORDER BY date_creation ASC";
+        break;
+    case 'date_desc':
+    default:
+        $order_sql = "ORDER BY date_creation DESC";
+        break;
+}
 
 // Compter le total
 $countSql = "SELECT COUNT(*) as total FROM cv WHERE 1=1";
@@ -24,7 +42,7 @@ $countStmt->execute($countParams);
 $total = $countStmt->fetch(PDO::FETCH_ASSOC)['total'];
 $totalPages = ceil($total / $limit);
 
-// Récupérer les CV (sans les JOIN erronés)
+// Récupérer les CV
 $sql = "SELECT * FROM cv WHERE 1=1";
 $params = [];
 if (!empty($search)) {
@@ -35,7 +53,7 @@ if (!empty($poste_filter)) {
     $sql .= " AND poste = :poste_filter";
     $params['poste_filter'] = $poste_filter;
 }
-$sql .= " ORDER BY date_creation DESC LIMIT :limit OFFSET :offset";
+$sql .= " $order_sql LIMIT :limit OFFSET :offset";
 $stmt = $pdo->prepare($sql);
 $stmt->bindValue(':limit', $limit, PDO::PARAM_INT);
 $stmt->bindValue(':offset', $offset, PDO::PARAM_INT);
@@ -45,7 +63,7 @@ foreach ($params as $key => $value) {
 $stmt->execute();
 $cvs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Récupérer les postes uniques pour le filtre
+// Postes uniques
 $stmtPostes = $pdo->query("SELECT DISTINCT poste FROM cv WHERE poste IS NOT NULL AND poste != '' ORDER BY poste");
 $postes = $stmtPostes->fetchAll(PDO::FETCH_COLUMN);
 ?>
@@ -59,17 +77,27 @@ $postes = $stmtPostes->fetchAll(PDO::FETCH_COLUMN);
         </div>
         
         <div class="p-8">
-            <!-- Barre de recherche -->
+            <!-- Barre de recherche et tri -->
             <form method="GET" class="flex flex-wrap gap-4 mb-6">
                 <input type="text" name="search" placeholder="Rechercher (nom, prénom, poste...)" value="<?= htmlspecialchars($search) ?>" class="flex-1 px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all">
-                <select name="poste_filter" class="px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary">
+                
+                <select name="poste_filter" class="px-4 py-3 rounded-xl border border-slate-200">
                     <option value="">Tous les postes</option>
                     <?php foreach ($postes as $p): ?>
                         <option value="<?= htmlspecialchars($p) ?>" <?= $poste_filter === $p ? 'selected' : '' ?>><?= htmlspecialchars($p) ?></option>
                     <?php endforeach; ?>
                 </select>
+                
+                <select name="order_by" class="px-4 py-3 rounded-xl border border-slate-200">
+                    <option value="nom_asc" <?= $order_by === 'nom_asc' ? 'selected' : '' ?>>Nom (A → Z)</option>
+                    <option value="nom_desc" <?= $order_by === 'nom_desc' ? 'selected' : '' ?>>Nom (Z → A)</option>
+                    <option value="date_desc" <?= $order_by === 'date_desc' ? 'selected' : '' ?>>Date (plus récent)</option>
+                    <option value="date_asc" <?= $order_by === 'date_asc' ? 'selected' : '' ?>>Date (plus ancien)</option>
+                </select>
+                
                 <button type="submit" class="bg-primary-container text-white px-6 py-3 rounded-xl hover:bg-primary-container/90 transition-all">Rechercher</button>
-                <?php if (!empty($search) || !empty($poste_filter)): ?>
+                
+                <?php if (!empty($search) || !empty($poste_filter) || $order_by !== 'nom_asc'): ?>
                     <a href="liste_cv.php" class="bg-slate-500 text-white px-6 py-3 rounded-xl hover:bg-slate-600 transition-all">Réinitialiser</a>
                 <?php endif; ?>
             </form>
@@ -86,11 +114,11 @@ $postes = $stmtPostes->fetchAll(PDO::FETCH_COLUMN);
                     <table class="w-full border-collapse">
                         <thead>
                             <tr class="bg-slate-100">
-                                <th class="px-4 py-3 text-left text-sm font-semibold">ID</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Username</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Nom</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Prénom</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Poste</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold">Année d'expérience</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Années d'éxpérience</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Date</th>
                                 <th class="px-4 py-3 text-center text-sm font-semibold">Action</th>
                             </tr>
@@ -98,11 +126,11 @@ $postes = $stmtPostes->fetchAll(PDO::FETCH_COLUMN);
                         <tbody>
                             <?php foreach ($cvs as $cv): ?>
                             <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                                <td class="px-4 py-3"><?= $cv['id'] ?></td>
+                                <td class="px-4 py-3"><?= $cv['username'] ?></td>
                                 <td class="px-4 py-3 font-medium"><?= htmlspecialchars($cv['nom']) ?></td>
                                 <td class="px-4 py-3"><?= htmlspecialchars($cv['prenom']) ?></td>
                                 <td class="px-4 py-3"><?= htmlspecialchars($cv['poste'] ?: '-') ?></td>
-                                <td class="px-4 py-3"><?= htmlspecialchars($cv['email'] ?: '-') ?></td>
+                                <td class="px-4 py-3"><?= htmlspecialchars($cv['annees_experience'] ?: '-') ?></td>
                                 <td class="px-4 py-3"><?= date('d/m/Y H:i', strtotime($cv['date_creation'])) ?></td>
                                 <td class="px-4 py-3 text-center">
                                     <div class="dropdown">
@@ -132,19 +160,19 @@ $postes = $stmtPostes->fetchAll(PDO::FETCH_COLUMN);
                 <?php if ($totalPages > 1): ?>
                 <div class="flex justify-center gap-2 mt-8">
                     <?php if ($page > 1): ?>
-                        <a href="?page=1&search=<?= urlencode($search) ?>&poste_filter=<?= urlencode($poste_filter) ?>" class="px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors">⏮</a>
-                        <a href="?page=<?= $page-1 ?>&search=<?= urlencode($search) ?>&poste_filter=<?= urlencode($poste_filter) ?>" class="px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors">◀</a>
+                        <a href="?page=1&search=<?= urlencode($search) ?>&poste_filter=<?= urlencode($poste_filter) ?>&order_by=<?= urlencode($order_by) ?>" class="px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors">⏮</a>
+                        <a href="?page=<?= $page-1 ?>&search=<?= urlencode($search) ?>&poste_filter=<?= urlencode($poste_filter) ?>&order_by=<?= urlencode($order_by) ?>" class="px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors">◀</a>
                     <?php endif; ?>
                     <?php for ($i = 1; $i <= $totalPages; $i++): ?>
                         <?php if ($i == $page): ?>
                             <span class="px-3 py-2 rounded-lg bg-primary-container text-white"><?= $i ?></span>
                         <?php else: ?>
-                            <a href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&poste_filter=<?= urlencode($poste_filter) ?>" class="px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors"><?= $i ?></a>
+                            <a href="?page=<?= $i ?>&search=<?= urlencode($search) ?>&poste_filter=<?= urlencode($poste_filter) ?>&order_by=<?= urlencode($order_by) ?>" class="px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors"><?= $i ?></a>
                         <?php endif; ?>
                     <?php endfor; ?>
                     <?php if ($page < $totalPages): ?>
-                        <a href="?page=<?= $page+1 ?>&search=<?= urlencode($search) ?>&poste_filter=<?= urlencode($poste_filter) ?>" class="px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors">▶</a>
-                        <a href="?page=<?= $totalPages ?>&search=<?= urlencode($search) ?>&poste_filter=<?= urlencode($poste_filter) ?>" class="px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors">⏭</a>
+                        <a href="?page=<?= $page+1 ?>&search=<?= urlencode($search) ?>&poste_filter=<?= urlencode($poste_filter) ?>&order_by=<?= urlencode($order_by) ?>" class="px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors">▶</a>
+                        <a href="?page=<?= $totalPages ?>&search=<?= urlencode($search) ?>&poste_filter=<?= urlencode($poste_filter) ?>&order_by=<?= urlencode($order_by) ?>" class="px-3 py-2 rounded-lg border border-slate-200 hover:bg-slate-100 transition-colors">⏭</a>
                     <?php endif; ?>
                 </div>
                 <?php endif; ?>

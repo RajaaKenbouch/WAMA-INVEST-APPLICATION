@@ -6,6 +6,23 @@ $annees_experience = $_POST['annees_experience'] ?? '0 an';
 $email = $_POST['email'] ?? '';
 $telephone = $_POST['telephone'] ?? '';
 $fichier_original = $_POST['fichier_original'] ?? '';
+$username = $_POST['username'] ?? '' ;
+
+if (trim($username) === '') {
+    $nom_clean = trim($nom);
+    $prenom_clean = trim($prenom);
+    $username = '';
+
+    if ($prenom_clean !== '') {
+        $username .= strtoupper(substr($prenom_clean, 0, 1));
+    }
+
+    if ($nom_clean !== '') {
+        $username .= strtoupper(substr($nom_clean, 0, 1));
+        $username .= strtoupper(substr($nom_clean, -1));
+    }
+}
+
 
 $competences = nl2br($_POST['competences'] ?? '');
 $certifications_raw = $_POST['certifications'] ?? '';
@@ -45,15 +62,17 @@ if (!empty($_POST['exp_date']) && !empty($_POST['exp_poste']) && !empty($_POST['
         $date = htmlspecialchars($_POST['exp_date'][$i]);
         $poste_exp = htmlspecialchars($_POST['exp_poste'][$i]);
         $entreprise = htmlspecialchars($_POST['exp_entreprise'][$i]);
-        $description = htmlspecialchars($_POST['exp_description'][$i] ?? '');
-        $outils = htmlspecialchars($_POST['exp_outils'][$i] ?? '');
+        $description = nl2br(htmlspecialchars($_POST['exp_description'][$i] ?? ''), false);
+        $outils_raw = trim($_POST['exp_outils'][$i] ?? '');
+        $outils = htmlspecialchars($outils_raw);
+        $outils_html = $outils_raw !== '' ? "<p><em><strong>Outils:</strong> $outils</em></p>" : "";
         
         if (!empty($date) || !empty($poste_exp) || !empty($entreprise)) {
             $experience_html .= "
-            <div style='margin-bottom: 15px;'>
+            <div style='margin-bottom: 10px;'>
                 <p>• <strong>$date</strong> : <strong>$poste_exp</strong> - $entreprise</p>
                 <p>$description</p>
-                <p><em><strong>Outils:</strong>  $outils</em></p>
+                $outils_html
             </div>
             ";
         }
@@ -82,10 +101,10 @@ $show_langues = !empty($langues_list);
 
 require_once 'db.php';
 
-$stmt = $pdo->prepare("INSERT INTO cv (nom, prenom, poste, email, telephone, competences, logo_type, fichier_original, certifications,annees_experience) 
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+$stmt = $pdo->prepare("INSERT INTO cv (username,nom, prenom, poste, email, telephone, competences, logo_type, fichier_original, certifications,annees_experience) 
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)");
 $stmt->execute([
-    $nom, $prenom, $poste, $email, $telephone,
+    $username, $nom, $prenom, $poste, $email, $telephone,
     $competences, $logo_type, $fichier_original,
     $certifications,$annees_experience
 ]);
@@ -163,13 +182,13 @@ $certifications_str = implode("\n", $certifications_list);
             </div>
         </div>
 
-        <h1><?= htmlspecialchars(strtoupper($nom)) ?> <?= htmlspecialchars(ucfirst($prenom)) ?></h1>
+        <h1><?= htmlspecialchars(($username)) ?> </h1>
         <div class="sous-titre"><?= htmlspecialchars($poste) ?></div>
-<?php if ($annees_experience !== '0 an'): ?>
-    <div class="experience-years" style="text-align: center; margin-top: 5px; color: #1a73e8;">
-        Expérience : <?= htmlspecialchars($annees_experience) ?>
-    </div>
-<?php endif; ?>
+        <?php if ($annees_experience !== '0 an'): ?>
+            <div class="experience-years" style="text-align: center; margin-top: 5px; color: #1a73e8;">
+                Expérience : <?= htmlspecialchars($annees_experience) ?>
+            </div>
+        <?php endif; ?>
 
         <div>
             <?php if ($show_competences): ?>
@@ -244,11 +263,13 @@ $certifications_str = implode("\n", $certifications_list);
     </div>
 
     <form action="download.php" method="POST">
+        <input type="hidden" name="username" value="<?= htmlspecialchars($username) ?>">
         <input type="hidden" name="nom" value="<?= htmlspecialchars($nom) ?>">
         <input type="hidden" name="prenom" value="<?= htmlspecialchars($prenom) ?>">
         <input type="hidden" name="poste" value="<?= htmlspecialchars($poste) ?>">
         <input type="hidden" name="email" value="<?= htmlspecialchars($email) ?>">
         <input type="hidden" name="telephone" value="<?= htmlspecialchars($telephone) ?>">
+        <input type="hidden" name="annees_experience" value="<?= htmlspecialchars($annees_experience) ?>">
         <input type="hidden" name="competences" value="<?= htmlspecialchars($_POST['competences'] ?? '') ?>">
         <input type="hidden" name="certifications" value="<?= htmlspecialchars(implode("\n", $certifications_list)) ?>">
         <input type="hidden" name="diplome_html" value="<?= htmlspecialchars($diplome_html) ?>">
