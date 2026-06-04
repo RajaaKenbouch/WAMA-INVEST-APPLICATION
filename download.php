@@ -3,7 +3,6 @@ require 'vendor/autoload.php';
 use Dompdf\Dompdf;
 use Dompdf\Options;
 
-// Récupération des données
 $username = $_POST['username'] ?? '';
 $nom = $_POST['nom'] ?? '';
 $prenom = $_POST['prenom'] ?? '';
@@ -18,7 +17,6 @@ $langues = $_POST['langues'] ?? '';
 $logo_type = $_POST['logo_type'] ?? 'link';
 $annees_experience = $_POST['annees_experience'] ?? '0 an';
 
-// Génération automatique du username si vide
 if (trim($username) === '') {
     $nom_clean = trim($nom);
     $prenom_clean = trim($prenom);
@@ -40,14 +38,21 @@ $show_experiences = !empty(trim(strip_tags($experience_html)));
 $show_certifications = !empty(trim(strip_tags($certifications)));
 $show_langues = !empty(trim(strip_tags($langues)));
 
-// Logo
+$logo_type = $_POST['logo_type'] ?? 'invest';
+
 if ($logo_type === 'invest') {
-    $logo_path = __DIR__ . '/images/logo_wama.png';
+    $logo_path = __DIR__ . '/images/logo WAMA.png';
+    $contact_nom = "WAMA INVEST";
+    $contact_tel = "+(212) 520 673 877";
+    $contact_email = "info@wama-invest.com";
 } else {
-    $logo_path = __DIR__ . '/images/logo wama link.png';
+    $logo_path = __DIR__ . '/images/y2il.png';
+    $contact_nom = "Y2IL";
+    $contact_tel = "+(212) 661 900 050";
+    $contact_email = "+(212) 673 749 308";
 }
 
-// Formater les compétences
+// Formater les compétences en liste
 if (!empty($competences) && strpos($competences, '-') !== false) {
     $competences = str_replace('- ', '', $competences);
     $comp_array = explode("\n", $competences);
@@ -168,8 +173,7 @@ $html = "
     <h1>" . htmlspecialchars($username) . "</h1>
     <div class='sous-titre'>" . htmlspecialchars($poste) . "</div>
 
-    " . ($annees_experience !== '0 an' ? "<div class='experience-years'>Expérience : " . htmlspecialchars($annees_experience) . "</div>" : "") . "    
-    " . ($show_competences ? "
+" . ($annees_experience !== '0 an' ? "<div class='experience-years'>Expérience : " . htmlspecialchars($annees_experience) . "</div>" : "") . "    " . ($show_competences ? "
     <div class='section'>
         <h2>COMPÉTENCES PROFESSIONNELLES</h2>
         $competences
@@ -203,7 +207,6 @@ $html = "
 </html>
 ";
 
-// Options DomPDF
 $options = new Options();
 $options->set('defaultFont', 'DejaVu Sans');
 $options->set('isHtml5ParserEnabled', true);
@@ -213,7 +216,6 @@ $dompdf->loadHtml($html, 'UTF-8');
 $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
 
-// Ajout du header (logo + contact) sur toutes les pages
 $canvas = $dompdf->getCanvas();
 $canvas->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) use ($logo_path) {
     $pageWidth = $canvas->get_width();
@@ -237,8 +239,11 @@ $canvas->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) u
     }
 
     $font = $fontMetrics->getFont('DejaVu Sans', 'normal') ?: $fontMetrics->getFont('Helvetica', 'normal');
-    $contactLines = ['+(212) 520 673 877', 'info@wama-invest.com'];
-
+    if ($logo_type === 'invest') {
+        $contactLines = ['+(212) 520 673 877', 'info@wama-invest.com'];
+    } else {
+        $contactLines = ['+(212) 661 900 050','+(212) 673 749 308'];
+    }
     foreach ($contactLines as $index => $line) {
         $fontSize = 9;
         $textWidth = $fontMetrics->getTextWidth($line, $font, $fontSize);
@@ -246,26 +251,41 @@ $canvas->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) u
     }
 
     $canvas->line($left, $lineY, $pageWidth - $right, $lineY, $blue, 1.5);
+    // Numéro de page (centré en bas)
+    $pageText =  $pageNumber . " / " . $pageCount;
+    $fontNormal = $fontMetrics->getFont('DejaVu Sans', 'normal') ?: $fontMetrics->getFont('Helvetica', 'normal');
+    $textWidth = $fontMetrics->getTextWidth($pageText, $fontNormal, 9);
+    $canvas->text(($pageWidth - $textWidth) / 2, $canvas->get_height() - 15, $pageText, $fontNormal, 9, $gray);
 });
 
-// Sauvegarde du PDF sur le serveur (optionnel)
-$cv_id = $_POST['cv_id'] ?? 0;
-if ($cv_id) {
-    $pdf_output = $dompdf->output();
-    $pdf_dir = __DIR__ . '/uploads/pdfs/';
-    if (!is_dir($pdf_dir)) mkdir($pdf_dir, 0777, true);
-    $pdf_filename = 'cv_' . $cv_id . '.pdf';
-    file_put_contents($pdf_dir . $pdf_filename, $pdf_output);
-    
-    // Mettre à jour le chemin en BDD
-    require_once 'db.php';
-    $stmt = $pdo->prepare("UPDATE cv SET pdf_path = ? WHERE id = ?");
-    $stmt->execute(['uploads/pdfs/' . $pdf_filename, $cv_id]);
-}
-
-// Nettoyage et envoi du PDF
 if (ob_get_length()) {
     ob_end_clean();
+}
+// =====================
+// SAUVEGARDE DU PDF SUR LE SERVEUR
+// =====================
+$cv_id = $_POST['cv_id'] ?? 0;
+if ($cv_id) {
+    // Récupérer le contenu du PDF généré
+    $pdf_output = $dompdf->output();
+    
+    // Créer le dossier si nécessaire
+    $pdf_dir = __DIR__ . '/uploads/pdfs/';
+    if (!is_dir($pdf_dir)) {
+        mkdir($pdf_dir, 0777, true);
+    }
+    
+    // Nom du fichier
+    $pdf_filename = 'cv_' . $cv_id . '.pdf';
+    $pdf_path = 'uploads/pdfs/' . $pdf_filename;
+    
+    // Sauvegarder le fichier
+    file_put_contents($pdf_dir . $pdf_filename, $pdf_output);
+    
+    // Mettre à jour la base de données
+    require_once 'db.php';
+    $stmt = $pdo->prepare("UPDATE cv SET pdf_path = ? WHERE id = ?");
+    $stmt->execute([$pdf_path, $cv_id]);
 }
 $dompdf->stream("CV_" . $username . ".pdf", ["Attachment" => true]);
 exit();

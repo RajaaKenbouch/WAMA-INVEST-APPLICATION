@@ -283,6 +283,7 @@ $response  = curl_exec($ch);
 $httpCode  = curl_getinfo($ch, CURLINFO_HTTP_CODE);
 $curlError = curl_error($ch);
 curl_close($ch);
+ 
 
 // echo $response;
 
@@ -419,7 +420,7 @@ if (!empty($parsed['experiences']) && is_array($parsed['experiences'])) {
 
         $experiences[] = [
             'periode'     => $periode,
-            'poste'       => $poste,
+            'poste_exp'       => $poste,
             'entreprise'  => $entreprise,
             'description' => $description,
             'outils'      => $outils,

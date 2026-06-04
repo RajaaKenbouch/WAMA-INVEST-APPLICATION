@@ -24,8 +24,8 @@
             <div>
                 <label class="block text-sm font-medium text-slate-700 mb-2">Choisir le logo</label>
                 <select name="logo_type" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all">
-                    <option value="invest">Logo WAMA INVEST</option>
-                    <option value="link">Logo WAMA LINK</option>
+                        <option value="invest">Logo WAMA INVEST</option>
+                        <option value="y2il">Logo Y2IL</option>
                 </select>
             </div>
 

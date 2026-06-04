@@ -60,7 +60,7 @@ $experiences_get = $data['experiences'] ?? [];
                 </h2>
                 <select name="logo_type" class="w-full px-4 py-3 rounded-xl border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 transition-all">
                     <option value="invest" <?= $logo_type_get === 'invest' ? 'selected' : '' ?>>Logo WAMA INVEST</option>
-                    <option value="link" <?= $logo_type_get === 'link' ? 'selected' : '' ?>>Logo WAMA LINK</option>
+                    <option value="y2il" <?= $logo_type_get === 'y2il' ? 'selected' : '' ?>>Logo Y2IL</option>
                 </select>
             </div>
             <input type="hidden" name="fichier_original" value="<?= htmlspecialchars($fichier_original_get) ?>">

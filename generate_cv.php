@@ -9,7 +9,6 @@ $email = $_POST['email'] ?? '';
 $telephone = $_POST['telephone'] ?? '';
 $fichier_original = $_POST['fichier_original'] ?? '';
 $username = $_POST['username'] ?? '' ;
-$user_id = $_SESSION['user_id'] ?? 0;
 
 if (trim($username) === '') {
     $nom_clean = trim($nom);
@@ -82,12 +81,18 @@ if (!empty($_POST['exp_date']) && !empty($_POST['exp_poste']) && !empty($_POST['
     }
 }
 
-$logo_type = $_POST['logo_type'] ?? 'link';
+$logo_type = $_POST['logo_type'] ?? 'invest';
 
 if ($logo_type === 'invest') {
     $logo_path = __DIR__ . '/images/logo_wama.png';
+    $contact_nom = "WAMA INVEST";
+    $contact_tel = "+(212) 520 673 877";
+    $contact_email = "info@wama-invest.com";
 } else {
-    $logo_path = __DIR__ . '/images/logo wama link.png';
+    $logo_path = __DIR__ . '/images/y2il.png';
+    $contact_nom = "Y2IL";
+    $contact_tel = "+(212) 661 900 050";
+    $contact_email = "+(212) 673 749 308";
 }
 
 if (file_exists($logo_path)) {
@@ -180,8 +185,8 @@ $certifications_str = implode("\n", $certifications_list);
         <div class="header">
             <img src="<?= $logo_base64 ?>" class="logo" alt="logo">
             <div class="contact-info">
-                ☎ +(212) 520 673 877<br>
-                ✉ info@wama-invest.com
+                <?= htmlspecialchars($contact_tel) ?><br>
+                <?= htmlspecialchars($contact_email) ?>
             </div>
         </div>
 
