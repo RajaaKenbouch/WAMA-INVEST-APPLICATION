@@ -96,7 +96,7 @@ $html = "
 <meta charset='UTF-8'>
 <style>
     @page {
-        margin: 34mm 16mm 10mm;
+        margin: 55mm 16mm 10mm;
     }
     * {
         box-sizing: border-box;
@@ -107,6 +107,14 @@ $html = "
         font-size: 12px;
         line-height: 1.45;
         margin: 0;
+    }
+    .fixed-header {
+        position: fixed;
+        top: -55mm;
+        left: 0;
+        right: 0;
+        height: 55mm;
+        padding-top: 36mm; /* To sit under the 34mm header line */
     }
     .cv {
         background: #ffffff;
@@ -169,11 +177,14 @@ $html = "
 </head>
 <body>
 
-<div class='cv'>
+<header class='fixed-header'>
     <h1>" . htmlspecialchars($username) . "</h1>
     <div class='sous-titre'>" . htmlspecialchars($poste) . "</div>
+" . ($annees_experience !== '0 an' ? "<div class='experience-years'>Expérience : " . htmlspecialchars($annees_experience) . "</div>" : "") . "
+</header>
 
-" . ($annees_experience !== '0 an' ? "<div class='experience-years'>Expérience : " . htmlspecialchars($annees_experience) . "</div>" : "") . "    " . ($show_competences ? "
+<div class='cv'>
+    " . ($show_competences ? "
     <div class='section'>
         <h2>COMPÉTENCES PROFESSIONNELLES</h2>
         $competences

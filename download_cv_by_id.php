@@ -78,17 +78,25 @@ $show_langues = !empty(trim($langues));
 // Construction du HTML
 $html = "
 <style>
+    @page {
+        margin: 200px 40px 40px; 
+    }
     body {
         font-family: 'Segoe UI', Arial, sans-serif;
-        margin: 30px;
+        margin: 0;
         line-height: 1.5;
+    }
+    header.fixed-header {
+        position: fixed;
+        top: -180px;
+        left: 0;
+        right: 0;
+        height: 160px;
     }
     .cv {
         max-width: 900px;
         margin: 0 auto;
         background: white;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-        border-radius: 8px;
     }
     .header {
         display: flex;
@@ -143,7 +151,7 @@ $html = "
     }
 </style>
 
-<div class='cv'>
+<header class='fixed-header'>
     <div class='header'>
         " . ($logo_base64 ? "<img src='$logo_base64' class='logo'>" : "") . "
         <div class='contact-info'>
@@ -155,6 +163,9 @@ $html = "
     <h1>" . htmlspecialchars($username) . "</h1>
     <div class='sous-titre'>" . htmlspecialchars($cv['poste']) . "</div>
 " . ($annees_experience !== '0 an' ? "<div style='text-align:center; color:#1a73e8; margin-bottom:15px;'> Expérience : " . htmlspecialchars($annees_experience) . "</div>" : "") . "
+</header>
+
+<div class='cv'>
     " . ($show_competences ? "
     <div class='section'>
         <h2>COMPÉTENCES</h2>
