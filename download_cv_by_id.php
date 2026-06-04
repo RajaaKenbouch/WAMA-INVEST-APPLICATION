@@ -54,12 +54,10 @@ if (trim($username) === '') {
 }
 // Logo
 $logo_type = $cv['logo_type'] ?? 'invest';
-if ($logo_type === 'link') {
-    $logo_path = __DIR__ . '/images/logo_link.png';
-    if (!file_exists($logo_path)) $logo_path = __DIR__ . '/images/logo wama link.png';
-} else {
+if ($logo_type === 'invest') {
     $logo_path = __DIR__ . '/images/logo_wama.png';
-    if (!file_exists($logo_path)) $logo_path = __DIR__ . '/images/logo WAMA.png';
+} else {
+    $logo_path = __DIR__ . '/images/y2il.png';
 }
 
 if (file_exists($logo_path)) {
@@ -79,7 +77,7 @@ $show_langues = !empty(trim($langues));
 $html = "
 <style>
     @page {
-        margin: 200px 40px 40px; 
+        margin: 260px 40px 40px; 
     }
     body {
         font-family: 'Segoe UI', Arial, sans-serif;
@@ -88,10 +86,10 @@ $html = "
     }
     header.fixed-header {
         position: fixed;
-        top: -180px;
+        top: -240px;
         left: 0;
         right: 0;
-        height: 160px;
+        height: 220px;
     }
     .cv {
         max-width: 900px;
@@ -162,7 +160,7 @@ $html = "
 
     <h1>" . htmlspecialchars($username) . "</h1>
     <div class='sous-titre'>" . htmlspecialchars($cv['poste']) . "</div>
-" . ($annees_experience !== '0 an' ? "<div style='text-align:center; color:#1a73e8; margin-bottom:15px;'> Expérience : " . htmlspecialchars($annees_experience) . "</div>" : "") . "
+" . ($annees_experience !== '0 an' ? "<div style='text-align:center; color:#1a73e8; margin-bottom:25px;'> Expérience : " . htmlspecialchars($annees_experience) . "</div>" : "") . "
 </header>
 
 <div class='cv'>

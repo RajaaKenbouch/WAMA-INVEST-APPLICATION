@@ -41,7 +41,7 @@ $show_langues = !empty(trim(strip_tags($langues)));
 $logo_type = $_POST['logo_type'] ?? 'invest';
 
 if ($logo_type === 'invest') {
-    $logo_path = __DIR__ . '/images/logo WAMA.png';
+    $logo_path = __DIR__ . '/images/logo_wama.png';
     $contact_nom = "WAMA INVEST";
     $contact_tel = "+(212) 520 673 877";
     $contact_email = "info@wama-invest.com";
@@ -96,7 +96,7 @@ $html = "
 <meta charset='UTF-8'>
 <style>
     @page {
-        margin: 55mm 16mm 10mm;
+        margin: 75mm 16mm 10mm;
     }
     * {
         box-sizing: border-box;
@@ -110,10 +110,10 @@ $html = "
     }
     .fixed-header {
         position: fixed;
-        top: -55mm;
+        top: -75mm;
         left: 0;
         right: 0;
-        height: 55mm;
+        height: 75mm;
         padding-top: 36mm; /* To sit under the 34mm header line */
     }
     .cv {
@@ -228,7 +228,7 @@ $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
 
 $canvas = $dompdf->getCanvas();
-$canvas->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) use ($logo_path) {
+$canvas->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) use ($logo_path, $logo_type) {
     $pageWidth = $canvas->get_width();
     $left = 45;
     $right = 45;
