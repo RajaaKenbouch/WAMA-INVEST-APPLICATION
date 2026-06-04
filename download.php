@@ -21,7 +21,7 @@ if ($cv_id) {
         $certifications_value = implode("\n", $certifications_from_db);
     }
 }
-$certifications = nl2br($certifications_value);
+$certifications = $certifications_value;
 $diplome_html = $_POST['diplome_html'] ?? '';
 $experience_html = $_POST['experience_html'] ?? '';
 $langues = $_POST['langues'] ?? '';
@@ -83,7 +83,10 @@ if (!empty($competences) && strpos($competences, '-') !== false) {
 
 // Traitement des certifications
 if (!empty($certifications)) {
-    $cert_clean = str_replace(['•', '▪', '·', '-'], "\n", $certifications);
+    $cert_clean = preg_replace('/<br\s*\/?>/i', "\n", $certifications);
+    $cert_clean = str_replace(["\r\n", "\r"], "\n", $cert_clean);
+    $cert_clean = preg_replace('/[\x{2022}\x{25AA}\x{00B7}]/u', "\n", $cert_clean);
+    $cert_clean = preg_replace('/(^|\n)\s*[-*]\s+/', "\n", $cert_clean);
     $cert_array = explode("\n", $cert_clean);
     $cert_array = array_filter(array_map('trim', $cert_array));
     
