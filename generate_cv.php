@@ -27,14 +27,14 @@ if (trim($username) === '') {
 
 
 $competences = nl2br($_POST['competences'] ?? '');
-$certifications_raw = $_POST['certifications'] ?? '';
-if (is_array($certifications_raw)) {
-    $certifications_list = $certifications_raw;
-    $certifications = implode("\n", $certifications_list);
-} else {
-    $certifications = nl2br($certifications_raw);
-    $certifications_list = array_filter(array_map('trim', explode("\n", $certifications_raw)), fn($c) => !empty($c));
+$certifications_raw = $_POST['certifications'] ?? [];
+if (!is_array($certifications_raw)) {
+    $certifications_raw = preg_split('/\r\n|\r|\n|,/', (string)$certifications_raw);
 }
+$certifications_list = array_values(array_filter(array_map(function($certification) {
+    return trim((string)$certification);
+}, $certifications_raw), fn($certification) => $certification !== ''));
+$certifications = implode("\n", $certifications_list);
 
 
 $langues_raw = $_POST['langues'] ?? '';
@@ -109,14 +109,24 @@ $show_langues = !empty($langues_list);
 
 require_once 'db.php';
 
-$stmt = $pdo->prepare("INSERT INTO cv (username,nom, prenom, poste, email, telephone, competences, logo_type, fichier_original, certifications,annees_experience) 
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)");
+$stmt = $pdo->prepare("INSERT INTO cv (username, nom, prenom, poste, email, telephone, competences, logo_type, fichier_original, annees_experience) 
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 $stmt->execute([
     $username, $nom, $prenom, $poste, $email, $telephone,
     $competences, $logo_type, $fichier_original,
-    $certifications,$annees_experience,
+    $annees_experience,
 ]);
 $cv_id = $pdo->lastInsertId();
+
+// Insertion des certifications
+if (!empty($certifications_list)) {
+    $stmtCertification = $pdo->prepare("INSERT INTO certifications (cv_id, nom) VALUES (?, ?)");
+    foreach ($certifications_list as $certification) {
+        if ($certification !== '') {
+            $stmtCertification->execute([$cv_id, $certification]);
+        }
+    }
+}
 
 // Insertion des diplômes
 if (!empty($_POST['diplome_date']) && !empty($_POST['diplome_titre']) && !empty($_POST['diplome_ecole'])) {
@@ -167,8 +177,6 @@ if (!empty($langues_list)) {
     }
 }
 
-// Convertir les certifications en chaîne (une par ligne)
-$certifications_str = implode("\n", $certifications_list);
 ?>
 
 <!DOCTYPE html>

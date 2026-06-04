@@ -32,9 +32,10 @@ $stmtLangues = $pdo->prepare("SELECT * FROM langues WHERE cv_id = ?");
 $stmtLangues->execute([$cv_id]);
 $langues = $stmtLangues->fetchAll(PDO::FETCH_ASSOC);
 
-// Certifications (depuis cv.certifications)
-$certifications = $cv['certifications'] ?? '';
-$certifications_list = !empty($certifications) ? explode("\n", $certifications) : [];
+// Certifications
+$stmtCertifications = $pdo->prepare("SELECT nom FROM certifications WHERE cv_id = ? ORDER BY id");
+$stmtCertifications->execute([$cv_id]);
+$certifications_list = array_column($stmtCertifications->fetchAll(PDO::FETCH_ASSOC), 'nom');
 
 // Construction des données pour le formulaire
 $editData = [

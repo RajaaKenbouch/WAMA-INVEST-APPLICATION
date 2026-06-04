@@ -24,16 +24,22 @@ $stmtExperiences = $pdo->prepare("SELECT * FROM experiences WHERE cv_id = ? ORDE
 $stmtExperiences->execute([$id]);
 $experiences = $stmtExperiences->fetchAll(PDO::FETCH_ASSOC);
 
+// Recuperer les certifications
+$stmtCertifications = $pdo->prepare("SELECT nom FROM certifications WHERE cv_id = ? ORDER BY id");
+$stmtCertifications->execute([$id]);
+$certifications_list = array_column($stmtCertifications->fetchAll(PDO::FETCH_ASSOC), 'nom');
+
 // Nettoyer les langues (supprimer les doublons)
 $langues = $cv['langues'] ?? '';
 $langues_arr = array_unique(array_map('trim', explode(',', $langues)));
 $langues = implode(', ', $langues_arr);
 
-// Nettoyer les certifications (supprimer les puces)
-$certifications = $cv['certifications'] ?? '';
-$certifications = preg_replace('/^[\s]*[\-\•\*\▪]\s*/', '', $certifications);
-$certifications = nl2br(htmlspecialchars($certifications));
-
+$certifications = '';
+if (!empty($certifications_list)) {
+    $certifications = '<ul>' . implode('', array_map(function($certification) {
+        return '<li>' . htmlspecialchars($certification) . '</li>';
+    }, $certifications_list)) . '</ul>';
+}
 
 $annees_experience = $cv['annees_experience'] ?? '0 an';
 $username = $cv['username'] ?? '';
@@ -70,7 +76,7 @@ if (file_exists($logo_path)) {
 $show_competences = !empty(trim(strip_tags($cv['competences'] ?? '')));
 $show_diplomes = !empty($diplomes);
 $show_experiences = !empty($experiences);
-$show_certifications = !empty(trim(strip_tags($cv['certifications'] ?? '')));
+$show_certifications = !empty($certifications_list);
 $show_langues = !empty(trim($langues));
 
 // Construction du HTML
@@ -194,7 +200,7 @@ $html = "
     " . ($show_certifications ? "
     <div class='section'>
         <h2>CERTIFICATIONS</h2>
-        <p>$certifications</p>
+        $certifications
     </div>" : "") . "
 
     " . ($show_langues ? "

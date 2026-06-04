@@ -10,7 +10,18 @@ $poste = $_POST['poste'] ?? '';
 $email = $_POST['email'] ?? '';
 $telephone = $_POST['telephone'] ?? '';
 $competences = nl2br($_POST['competences'] ?? '');
-$certifications = nl2br($_POST['certifications'] ?? '');
+$cv_id = $_POST['cv_id'] ?? 0;
+$certifications_value = $_POST['certifications'] ?? '';
+if ($cv_id) {
+    require_once 'db.php';
+    $stmtCertifications = $pdo->prepare("SELECT nom FROM certifications WHERE cv_id = ? ORDER BY id");
+    $stmtCertifications->execute([$cv_id]);
+    $certifications_from_db = array_column($stmtCertifications->fetchAll(PDO::FETCH_ASSOC), 'nom');
+    if (!empty($certifications_from_db)) {
+        $certifications_value = implode("\n", $certifications_from_db);
+    }
+}
+$certifications = nl2br($certifications_value);
 $diplome_html = $_POST['diplome_html'] ?? '';
 $experience_html = $_POST['experience_html'] ?? '';
 $langues = $_POST['langues'] ?? '';
@@ -275,7 +286,6 @@ if (ob_get_length()) {
 // =====================
 // SAUVEGARDE DU PDF SUR LE SERVEUR
 // =====================
-$cv_id = $_POST['cv_id'] ?? 0;
 if ($cv_id) {
     // Récupérer le contenu du PDF généré
     $pdf_output = $dompdf->output();
