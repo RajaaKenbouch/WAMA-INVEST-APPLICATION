@@ -251,7 +251,7 @@ $prompt .= "\n\n" . truncateTextForGemini($text, $maxCvInputChars);
 // =====================
 // APPEL GEMINI API (IDENTIQUE - NON MODIFIÉ)
 // =====================
-$url     = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" . $geminiApiKey;
+$url= "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" . $geminiApiKey;
 $payload = json_encode([
     'contents' => [[
         'parts' => [[

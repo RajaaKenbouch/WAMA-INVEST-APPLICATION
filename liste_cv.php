@@ -127,19 +127,13 @@ $postes = $stmtPostes->fetchAll(PDO::FETCH_COLUMN);
                             <?php foreach ($cvs as $cv): ?>
                             <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
                                 <td class="px-4 py-3">
-                                    <a href="profil_user.php?id=<?= $cv['candidat_id'] ?>" class="text-primary-container hover:underline font-medium">
                                         <?= htmlspecialchars($cv['username'] ?? '-') ?>
-                                    </a>
                                 </td>
                                 <td class="px-4 py-3">
-                                    <a href="profil_user.php?id=<?= $cv['candidat_id'] ?>" class="text-primary-container hover:underline font-medium">
                                         <?= htmlspecialchars($cv['nom']) ?>
-                                    </a>
                                 </td>
                                 <td class="px-4 py-3">
-                                    <a href="profil_user.php?id=<?= $cv['candidat_id'] ?>" class="text-primary-container hover:underline">
                                         <?= htmlspecialchars($cv['prenom']) ?>
-                                    </a>
                                 </td>
                                 <td class="px-4 py-3"><?= htmlspecialchars($cv['poste'] ?: '-') ?></td>
                                 <td class="px-4 py-3"><?= htmlspecialchars($cv['annees_experience'] ?: '-') ?></td>
