@@ -1,3 +1,5 @@
+<?php require_once 'inc/auth.php'; ?>
+<?php require_once 'inc/header.php'; ?>
 <?php
 $nom = $_POST['nom'] ?? '';
 $prenom = $_POST['prenom'] ?? '';
@@ -25,14 +27,14 @@ if (trim($username) === '') {
 
 
 $competences = nl2br($_POST['competences'] ?? '');
-$certifications_raw = $_POST['certifications'] ?? '';
-if (is_array($certifications_raw)) {
-    $certifications_list = $certifications_raw;
-    $certifications = implode("\n", $certifications_list);
-} else {
-    $certifications = nl2br($certifications_raw);
-    $certifications_list = array_filter(array_map('trim', explode("\n", $certifications_raw)), fn($c) => !empty($c));
+$certifications_raw = $_POST['certifications'] ?? [];
+if (!is_array($certifications_raw)) {
+    $certifications_raw = preg_split('/\r\n|\r|\n|,/', (string)$certifications_raw);
 }
+$certifications_list = array_values(array_filter(array_map(function($certification) {
+    return trim((string)$certification);
+}, $certifications_raw), fn($certification) => $certification !== ''));
+$certifications = implode("\n", $certifications_list);
 
 
 $langues_raw = $_POST['langues'] ?? '';
@@ -79,12 +81,18 @@ if (!empty($_POST['exp_date']) && !empty($_POST['exp_poste']) && !empty($_POST['
     }
 }
 
-$logo_type = $_POST['logo_type'] ?? 'link';
+$logo_type = $_POST['logo_type'] ?? 'invest';
 
 if ($logo_type === 'invest') {
-    $logo_path = __DIR__ . '/images/logo WAMA.png';
+    $logo_path = __DIR__ . '/images/logo_wama.png';
+    $contact_nom = "WAMA INVEST";
+    $contact_tel = "+(212) 520 673 877";
+    $contact_email = "info@wama-invest.com";
 } else {
-    $logo_path = __DIR__ . '/images/logo wama link.png';
+    $logo_path = __DIR__ . '/images/y2il.png';
+    $contact_nom = "Y2IL";
+    $contact_tel = "+(212) 661 900 050";
+    $contact_email = "+(212) 673 749 308";
 }
 
 if (file_exists($logo_path)) {
@@ -101,14 +109,24 @@ $show_langues = !empty($langues_list);
 
 require_once 'db.php';
 
-$stmt = $pdo->prepare("INSERT INTO cv (username,nom, prenom, poste, email, telephone, competences, logo_type, fichier_original, certifications,annees_experience) 
-                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?,?)");
+$stmt = $pdo->prepare("INSERT INTO cv (username, nom, prenom, poste, email, telephone, competences, logo_type, fichier_original, annees_experience) 
+                       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
 $stmt->execute([
     $username, $nom, $prenom, $poste, $email, $telephone,
     $competences, $logo_type, $fichier_original,
-    $certifications,$annees_experience
+    $annees_experience,
 ]);
 $cv_id = $pdo->lastInsertId();
+
+// Insertion des certifications
+if (!empty($certifications_list)) {
+    $stmtCertification = $pdo->prepare("INSERT INTO certifications (cv_id, nom) VALUES (?, ?)");
+    foreach ($certifications_list as $certification) {
+        if ($certification !== '') {
+            $stmtCertification->execute([$cv_id, $certification]);
+        }
+    }
+}
 
 // Insertion des diplômes
 if (!empty($_POST['diplome_date']) && !empty($_POST['diplome_titre']) && !empty($_POST['diplome_ecole'])) {
@@ -159,8 +177,6 @@ if (!empty($langues_list)) {
     }
 }
 
-// Convertir les certifications en chaîne (une par ligne)
-$certifications_str = implode("\n", $certifications_list);
 ?>
 
 <!DOCTYPE html>
@@ -177,8 +193,8 @@ $certifications_str = implode("\n", $certifications_list);
         <div class="header">
             <img src="<?= $logo_base64 ?>" class="logo" alt="logo">
             <div class="contact-info">
-                ☎ +(212) 520 673 877<br>
-                ✉ info@wama-invest.com
+                <?= htmlspecialchars($contact_tel) ?><br>
+                <?= htmlspecialchars($contact_email) ?>
             </div>
         </div>
 
@@ -263,6 +279,7 @@ $certifications_str = implode("\n", $certifications_list);
     </div>
 
     <form action="download.php" method="POST">
+        <input type="hidden" name="cv_id" value="<?= $cv_id ?>">
         <input type="hidden" name="username" value="<?= htmlspecialchars($username) ?>">
         <input type="hidden" name="nom" value="<?= htmlspecialchars($nom) ?>">
         <input type="hidden" name="prenom" value="<?= htmlspecialchars($prenom) ?>">

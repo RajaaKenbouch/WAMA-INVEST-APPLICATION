@@ -24,16 +24,22 @@ $stmtExperiences = $pdo->prepare("SELECT * FROM experiences WHERE cv_id = ? ORDE
 $stmtExperiences->execute([$id]);
 $experiences = $stmtExperiences->fetchAll(PDO::FETCH_ASSOC);
 
+// Recuperer les certifications
+$stmtCertifications = $pdo->prepare("SELECT nom FROM certifications WHERE cv_id = ? ORDER BY id");
+$stmtCertifications->execute([$id]);
+$certifications_list = array_column($stmtCertifications->fetchAll(PDO::FETCH_ASSOC), 'nom');
+
 // Nettoyer les langues (supprimer les doublons)
 $langues = $cv['langues'] ?? '';
 $langues_arr = array_unique(array_map('trim', explode(',', $langues)));
 $langues = implode(', ', $langues_arr);
 
-// Nettoyer les certifications (supprimer les puces)
-$certifications = $cv['certifications'] ?? '';
-$certifications = preg_replace('/^[\s]*[\-\•\*\▪]\s*/', '', $certifications);
-$certifications = nl2br(htmlspecialchars($certifications));
-
+$certifications = '';
+if (!empty($certifications_list)) {
+    $certifications = '<ul>' . implode('', array_map(function($certification) {
+        return '<li>' . htmlspecialchars($certification) . '</li>';
+    }, $certifications_list)) . '</ul>';
+}
 
 $annees_experience = $cv['annees_experience'] ?? '0 an';
 $username = $cv['username'] ?? '';
@@ -54,12 +60,10 @@ if (trim($username) === '') {
 }
 // Logo
 $logo_type = $cv['logo_type'] ?? 'invest';
-if ($logo_type === 'link') {
-    $logo_path = __DIR__ . '/images/logo_link.png';
-    if (!file_exists($logo_path)) $logo_path = __DIR__ . '/images/logo wama link.png';
-} else {
+if ($logo_type === 'invest') {
     $logo_path = __DIR__ . '/images/logo_wama.png';
-    if (!file_exists($logo_path)) $logo_path = __DIR__ . '/images/logo WAMA.png';
+} else {
+    $logo_path = __DIR__ . '/images/y2il.png';
 }
 
 if (file_exists($logo_path)) {
@@ -72,23 +76,31 @@ if (file_exists($logo_path)) {
 $show_competences = !empty(trim(strip_tags($cv['competences'] ?? '')));
 $show_diplomes = !empty($diplomes);
 $show_experiences = !empty($experiences);
-$show_certifications = !empty(trim(strip_tags($cv['certifications'] ?? '')));
+$show_certifications = !empty($certifications_list);
 $show_langues = !empty(trim($langues));
 
 // Construction du HTML
 $html = "
 <style>
+    @page {
+        margin: 260px 40px 40px; 
+    }
     body {
         font-family: 'Segoe UI', Arial, sans-serif;
-        margin: 30px;
+        margin: 0;
         line-height: 1.5;
+    }
+    header.fixed-header {
+        position: fixed;
+        top: -240px;
+        left: 0;
+        right: 0;
+        height: 220px;
     }
     .cv {
         max-width: 900px;
         margin: 0 auto;
         background: white;
-        box-shadow: 0 8px 20px rgba(0,0,0,0.1);
-        border-radius: 8px;
     }
     .header {
         display: flex;
@@ -143,7 +155,7 @@ $html = "
     }
 </style>
 
-<div class='cv'>
+<header class='fixed-header'>
     <div class='header'>
         " . ($logo_base64 ? "<img src='$logo_base64' class='logo'>" : "") . "
         <div class='contact-info'>
@@ -154,7 +166,10 @@ $html = "
 
     <h1>" . htmlspecialchars($username) . "</h1>
     <div class='sous-titre'>" . htmlspecialchars($cv['poste']) . "</div>
-" . ($annees_experience !== '0 an' ? "<div style='text-align:center; color:#1a73e8; margin-bottom:15px;'> Expérience : " . htmlspecialchars($annees_experience) . "</div>" : "") . "
+" . ($annees_experience !== '0 an' ? "<div style='text-align:center; color:#1a73e8; margin-bottom:25px;'> Expérience : " . htmlspecialchars($annees_experience) . "</div>" : "") . "
+</header>
+
+<div class='cv'>
     " . ($show_competences ? "
     <div class='section'>
         <h2>COMPÉTENCES</h2>
@@ -185,7 +200,7 @@ $html = "
     " . ($show_certifications ? "
     <div class='section'>
         <h2>CERTIFICATIONS</h2>
-        <p>$certifications</p>
+        $certifications
     </div>" : "") . "
 
     " . ($show_langues ? "

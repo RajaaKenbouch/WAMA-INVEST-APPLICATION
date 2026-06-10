@@ -118,17 +118,23 @@ $postes = $stmtPostes->fetchAll(PDO::FETCH_COLUMN);
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Nom</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Prénom</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Poste</th>
-                                <th class="px-4 py-3 text-left text-sm font-semibold">Années d'éxpérience</th>
+                                <th class="px-4 py-3 text-left text-sm font-semibold">Années d'expérience</th>
                                 <th class="px-4 py-3 text-left text-sm font-semibold">Date</th>
                                 <th class="px-4 py-3 text-center text-sm font-semibold">Action</th>
-                            </tr>
+                            <tr>
                         </thead>
                         <tbody>
                             <?php foreach ($cvs as $cv): ?>
                             <tr class="border-b border-slate-100 hover:bg-slate-50 transition-colors">
-                                <td class="px-4 py-3"><?= $cv['username'] ?></td>
-                                <td class="px-4 py-3 font-medium"><?= htmlspecialchars($cv['nom']) ?></td>
-                                <td class="px-4 py-3"><?= htmlspecialchars($cv['prenom']) ?></td>
+                                <td class="px-4 py-3">
+                                        <?= htmlspecialchars($cv['username'] ?? '-') ?>
+                                </td>
+                                <td class="px-4 py-3">
+                                        <?= htmlspecialchars($cv['nom']) ?>
+                                </td>
+                                <td class="px-4 py-3">
+                                        <?= htmlspecialchars($cv['prenom']) ?>
+                                </td>
                                 <td class="px-4 py-3"><?= htmlspecialchars($cv['poste'] ?: '-') ?></td>
                                 <td class="px-4 py-3"><?= htmlspecialchars($cv['annees_experience'] ?: '-') ?></td>
                                 <td class="px-4 py-3"><?= date('d/m/Y H:i', strtotime($cv['date_creation'])) ?></td>
@@ -138,7 +144,7 @@ $postes = $stmtPostes->fetchAll(PDO::FETCH_COLUMN);
                                             <span class="dots">•••</span>
                                         </button>
                                         <div class="dropdown-content">
-                                            <a href="download_cv_by_id.php?id=<?= $cv['id'] ?>" class="dropdown-item">
+                                            <a href="down_load_cv.php?id=<?= $cv['id'] ?>" class="dropdown-item">
                                                 <span class="icon">📥</span> Télécharger
                                             </a>
                                             <a href="download_original.php?id=<?= $cv['id'] ?>" class="dropdown-item">
@@ -146,6 +152,9 @@ $postes = $stmtPostes->fetchAll(PDO::FETCH_COLUMN);
                                             </a>
                                             <a href="delete_cv.php?id=<?= $cv['id'] ?>" class="dropdown-item delete" onclick="return confirm('Supprimer définitivement ce CV ?')">
                                                 <span class="icon">🗑️</span> Supprimer
+                                            </a>
+                                            <a href="edit_cv.php?id=<?= $cv['id'] ?>" class="dropdown-item">
+                                                <span class="icon">✏️</span> Modifier
                                             </a>
                                         </div>
                                     </div>

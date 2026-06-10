@@ -201,7 +201,7 @@ Your task: Extract ALL useful information from the CV below.
   ],
   "experiences": [
     {
-      "poste": "job title, or empty string if unknown",
+      "poste": "job title (ex: Développeur Web, Data Scientist, Administrateur Systèmes) - MANDATORY: extract even if not explicitly labeled",
       "entreprise": "company name, or empty string if unknown",
       "periode": "start - end dates, or empty string if no date found",
       "description": "verbatim text from the CV (no rewriting), or empty string",
@@ -251,7 +251,7 @@ $prompt .= "\n\n" . truncateTextForGemini($text, $maxCvInputChars);
 // =====================
 // APPEL GEMINI API (IDENTIQUE - NON MODIFIÉ)
 // =====================
-$url     = "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" . $geminiApiKey;
+$url= "https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=" . $geminiApiKey;
 $payload = json_encode([
     'contents' => [[
         'parts' => [[
@@ -285,6 +285,8 @@ $curlError = curl_error($ch);
 curl_close($ch);
  
 
+// echo $response;
+
 // =====================
 // GESTION ERREURS CURL (AVEC TOAST)
 // =====================
@@ -312,6 +314,7 @@ if (!isset($geminiData['candidates'][0]['content']['parts'][0]['text'])) {
     header("Location: importationCV.php");
     exit;
 }
+
 
 $rawText = $geminiData['candidates'][0]['content']['parts'][0]['text'];
 
@@ -417,7 +420,7 @@ if (!empty($parsed['experiences']) && is_array($parsed['experiences'])) {
 
         $experiences[] = [
             'periode'     => $periode,
-            'poste'       => $poste,
+            'poste_exp'       => $poste,
             'entreprise'  => $entreprise,
             'description' => $description,
             'outils'      => $outils,

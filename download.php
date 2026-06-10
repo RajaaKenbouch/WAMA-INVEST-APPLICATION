@@ -10,7 +10,18 @@ $poste = $_POST['poste'] ?? '';
 $email = $_POST['email'] ?? '';
 $telephone = $_POST['telephone'] ?? '';
 $competences = nl2br($_POST['competences'] ?? '');
-$certifications = nl2br($_POST['certifications'] ?? '');
+$cv_id = $_POST['cv_id'] ?? 0;
+$certifications_value = $_POST['certifications'] ?? '';
+if ($cv_id) {
+    require_once 'db.php';
+    $stmtCertifications = $pdo->prepare("SELECT nom FROM certifications WHERE cv_id = ? ORDER BY id");
+    $stmtCertifications->execute([$cv_id]);
+    $certifications_from_db = array_column($stmtCertifications->fetchAll(PDO::FETCH_ASSOC), 'nom');
+    if (!empty($certifications_from_db)) {
+        $certifications_value = implode("\n", $certifications_from_db);
+    }
+}
+$certifications = $certifications_value;
 $diplome_html = $_POST['diplome_html'] ?? '';
 $experience_html = $_POST['experience_html'] ?? '';
 $langues = $_POST['langues'] ?? '';
@@ -25,7 +36,6 @@ if (trim($username) === '') {
     if ($prenom_clean !== '') {
         $username .= strtoupper(substr($prenom_clean, 0, 1));
     }
-
     if ($nom_clean !== '') {
         $username .= strtoupper(substr($nom_clean, 0, 1));
         $username .= strtoupper(substr($nom_clean, -1));
@@ -39,10 +49,18 @@ $show_experiences = !empty(trim(strip_tags($experience_html)));
 $show_certifications = !empty(trim(strip_tags($certifications)));
 $show_langues = !empty(trim(strip_tags($langues)));
 
+$logo_type = $_POST['logo_type'] ?? 'invest';
+
 if ($logo_type === 'invest') {
-    $logo_path = __DIR__ . '/images/logo WAMA.png';
+    $logo_path = __DIR__ . '/images/logo_wama.png';
+    $contact_nom = "WAMA INVEST";
+    $contact_tel = "+(212) 520 673 877";
+    $contact_email = "info@wama-invest.com";
 } else {
-    $logo_path = __DIR__ . '/images/logo wama link.png';
+    $logo_path = __DIR__ . '/images/y2il.png';
+    $contact_nom = "Y2IL";
+    $contact_tel = "+(212) 661 900 050";
+    $contact_email = "+(212) 673 749 308";
 }
 
 // Formater les compétences en liste
@@ -65,8 +83,10 @@ if (!empty($competences) && strpos($competences, '-') !== false) {
 
 // Traitement des certifications
 if (!empty($certifications)) {
-    // Remplacer les puces par des retours à la ligne
-    $cert_clean = str_replace(['•', '▪', '·', '-'], "\n", $certifications);
+    $cert_clean = preg_replace('/<br\s*\/?>/i', "\n", $certifications);
+    $cert_clean = str_replace(["\r\n", "\r"], "\n", $cert_clean);
+    $cert_clean = preg_replace('/[\x{2022}\x{25AA}\x{00B7}]/u', "\n", $cert_clean);
+    $cert_clean = preg_replace('/(^|\n)\s*[-*]\s+/', "\n", $cert_clean);
     $cert_array = explode("\n", $cert_clean);
     $cert_array = array_filter(array_map('trim', $cert_array));
     
@@ -82,6 +102,7 @@ if (!empty($certifications)) {
     $certifications = "<p>Aucune certification</p>";
 }
 
+// HTML du PDF
 $html = "
 <!DOCTYPE html>
 <html lang='fr'>
@@ -89,7 +110,7 @@ $html = "
 <meta charset='UTF-8'>
 <style>
     @page {
-        margin: 34mm 16mm 10mm;
+        margin: 75mm 16mm 10mm;
     }
     * {
         box-sizing: border-box;
@@ -100,6 +121,14 @@ $html = "
         font-size: 12px;
         line-height: 1.45;
         margin: 0;
+    }
+    .fixed-header {
+        position: fixed;
+        top: -75mm;
+        left: 0;
+        right: 0;
+        height: 75mm;
+        padding-top: 36mm; /* To sit under the 34mm header line */
     }
     .cv {
         background: #ffffff;
@@ -162,11 +191,14 @@ $html = "
 </head>
 <body>
 
-<div class='cv'>
+<header class='fixed-header'>
     <h1>" . htmlspecialchars($username) . "</h1>
     <div class='sous-titre'>" . htmlspecialchars($poste) . "</div>
+" . ($annees_experience !== '0 an' ? "<div class='experience-years'>Expérience : " . htmlspecialchars($annees_experience) . "</div>" : "") . "
+</header>
 
-" . ($annees_experience !== '0 an' ? "<div class='experience-years'>Expérience : " . htmlspecialchars($annees_experience) . "</div>" : "") . "    " . ($show_competences ? "
+<div class='cv'>
+    " . ($show_competences ? "
     <div class='section'>
         <h2>COMPÉTENCES PROFESSIONNELLES</h2>
         $competences
@@ -180,7 +212,7 @@ $html = "
 
     " . ($show_experiences ? "
     <div class='section'>
-        <h2>EXPÉRIENCE PROFESSIONNELLE</h2>
+        <h2>EXPÉRIENCES PROFESSIONNELLES</h2>
         $experience_html
     </div>" : "") . "
 
@@ -210,7 +242,7 @@ $dompdf->setPaper('A4', 'portrait');
 $dompdf->render();
 
 $canvas = $dompdf->getCanvas();
-$canvas->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) use ($logo_path) {
+$canvas->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) use ($logo_path, $logo_type) {
     $pageWidth = $canvas->get_width();
     $left = 45;
     $right = 45;
@@ -232,8 +264,11 @@ $canvas->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) u
     }
 
     $font = $fontMetrics->getFont('DejaVu Sans', 'normal') ?: $fontMetrics->getFont('Helvetica', 'normal');
-    $contactLines = ['+(212) 520 673 877', 'info@wama-invest.com'];
-
+    if ($logo_type === 'invest') {
+        $contactLines = ['+(212) 520 673 877', 'info@wama-invest.com'];
+    } else {
+        $contactLines = ['+(212) 661 900 050','+(212) 673 749 308'];
+    }
     foreach ($contactLines as $index => $line) {
         $fontSize = 9;
         $textWidth = $fontMetrics->getTextWidth($line, $font, $fontSize);
@@ -241,11 +276,41 @@ $canvas->page_script(function ($pageNumber, $pageCount, $canvas, $fontMetrics) u
     }
 
     $canvas->line($left, $lineY, $pageWidth - $right, $lineY, $blue, 1.5);
+    // Numéro de page (centré en bas)
+    $pageText =  $pageNumber . " / " . $pageCount;
+    $fontNormal = $fontMetrics->getFont('DejaVu Sans', 'normal') ?: $fontMetrics->getFont('Helvetica', 'normal');
+    $textWidth = $fontMetrics->getTextWidth($pageText, $fontNormal, 9);
+    $canvas->text(($pageWidth - $textWidth) / 2, $canvas->get_height() - 15, $pageText, $fontNormal, 9, $gray);
 });
 
 if (ob_get_length()) {
     ob_end_clean();
 }
-$dompdf->stream("CV_" . $nom . "_" . $prenom . ".pdf", ["Attachment" => true]);
+// =====================
+// SAUVEGARDE DU PDF SUR LE SERVEUR
+// =====================
+if ($cv_id) {
+    // Récupérer le contenu du PDF généré
+    $pdf_output = $dompdf->output();
+    
+    // Créer le dossier si nécessaire
+    $pdf_dir = __DIR__ . '/uploads/pdfs/';
+    if (!is_dir($pdf_dir)) {
+        mkdir($pdf_dir, 0777, true);
+    }
+    
+    // Nom du fichier
+    $pdf_filename = 'cv_' . $cv_id . '.pdf';
+    $pdf_path = 'uploads/pdfs/' . $pdf_filename;
+    
+    // Sauvegarder le fichier
+    file_put_contents($pdf_dir . $pdf_filename, $pdf_output);
+    
+    // Mettre à jour la base de données
+    require_once 'db.php';
+    $stmt = $pdo->prepare("UPDATE cv SET pdf_path = ? WHERE id = ?");
+    $stmt->execute([$pdf_path, $cv_id]);
+}
+$dompdf->stream("CV_" . $username . ".pdf", ["Attachment" => true]);
 exit();
 ?>
