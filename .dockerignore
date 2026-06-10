@@ -1,0 +1,7 @@
+.git
+.env
+vendor
+uploads
+*.sql
+*.zip
+debug_api.json

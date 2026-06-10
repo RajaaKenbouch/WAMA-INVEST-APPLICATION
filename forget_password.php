@@ -22,7 +22,13 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt->execute([$token, $expiry, $email]);
         
 
-        $reset_link = "http://localhost/Application%20WAMA%20INVEST/reset_password.php?token=" . $token;
+        $appUrl = rtrim(
+            getenv('APP_URL')
+                ?: ($_SERVER['APP_URL'] ?? '')
+                ?: (($_SERVER['REQUEST_SCHEME'] ?? 'http') . '://' . $_SERVER['HTTP_HOST'] . rtrim(dirname($_SERVER['SCRIPT_NAME']), '/\\')),
+            '/'
+        );
+        $reset_link = $appUrl . "/reset_password.php?token=" . urlencode($token);
         
         $subject = "Reinitialisation de votre mot de passe - WAMA INVEST";
         $body = "

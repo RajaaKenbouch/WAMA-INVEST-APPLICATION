@@ -4,10 +4,25 @@ require_once __DIR__ . '/vendor/autoload.php';
 $dotenv = Dotenv\Dotenv::createImmutable(__DIR__);
 $dotenv->load();
 
-$host = $_ENV['DB_HOST'];
-$db   = $_ENV['DB_NAME'];
-$user = $_ENV['DB_USER'];
-$pass = $_ENV['DB_PASS'];
+function app_env(string $key, ?string $default = null): ?string
+{
+    $value = getenv($key);
+
+    if ($value !== false) {
+        return $value;
+    }
+
+    if (isset($_SERVER[$key])) {
+        return $_SERVER[$key];
+    }
+
+    return $_ENV[$key] ?? $default;
+}
+
+$host = app_env('DB_HOST', 'localhost');
+$db   = app_env('DB_NAME', 'wama_cv');
+$user = app_env('DB_USER', 'root');
+$pass = app_env('DB_PASS', '');
 
 try {
     $pdo = new PDO(

@@ -1,0 +1,51 @@
+services:
+  app:
+    build:
+      context: .
+    ports:
+      - "8080:80"
+    env_file:
+      - .env
+    environment:
+      APP_URL: http://localhost:8080
+      DB_HOST: db
+      DB_NAME: wama_cv
+      DB_USER: wama_user
+      DB_PASS: wama_pass
+    volumes:
+      - .:/var/www/html
+      - vendor_data:/var/www/html/vendor
+    depends_on:
+      - db
+    restart: unless-stopped
+
+  db:
+    image: mariadb:10.4
+    ports:
+      - "3307:3306"
+    environment:
+      MARIADB_ROOT_PASSWORD: rootpass
+      MARIADB_DATABASE: wama_cv
+      MARIADB_USER: wama_user
+      MARIADB_PASSWORD: wama_pass
+    volumes:
+      - db_data:/var/lib/mysql
+      - "./wama_cv (1).sql:/docker-entrypoint-initdb.d/01-wama_cv.sql:ro"
+    restart: unless-stopped
+
+  phpmyadmin:
+    image: phpmyadmin:5.2-apache
+    ports:
+      - "8081:80"
+    environment:
+      PMA_HOST: db
+      PMA_USER: root
+      PMA_PASSWORD: rootpass
+      UPLOAD_LIMIT: 256M
+    depends_on:
+      - db
+    restart: unless-stopped
+
+volumes:
+  db_data:
+  vendor_data:
